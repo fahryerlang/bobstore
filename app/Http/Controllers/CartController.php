@@ -86,9 +86,9 @@ class CartController extends Controller
     }
 
     /**
-     * Process checkout, persist sales, and clear the cart.
+     * Show checkout page from cart.
      */
-    public function checkout(): RedirectResponse
+    public function checkout()
     {
         $cartItems = Cart::with('product')
             ->where('user_id', Auth::id())
@@ -98,29 +98,55 @@ class CartController extends Controller
             return redirect()->route('cart.index')->with('error', 'Keranjang masih kosong.');
         }
 
-        foreach ($cartItems as $item) {
-            if (!$item->product) {
-                return redirect()->route('cart.index')->with('error', 'Salah satu produk tidak tersedia lagi.');
-            }
+        $items = $cartItems->map(function ($item) {
+            return [
+                'id' => $item->product_id,
+                'name' => $item->product->nama_barang,
+                'price' => $item->product->harga,
+                'quantity' => $item->quantity,
+                'max_stock' => $item->product->stok,
+                'image' => $item->product->gambar,
+            ];
+        })->toArray();
 
-            if ($item->product->stok !== null && $item->product->stok < $item->quantity) {
-                return redirect()->route('cart.index')->with('error', 'Stok produk '.$item->product->nama_barang.' tidak mencukupi.');
+        return view('cart.checkout', compact('items'));
+    }
+
+    /**
+     * Process checkout and complete payment.
+     */
+    public function processCheckout(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'items' => ['required', 'array'],
+            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.price' => ['required', 'numeric', 'min:0'],
+            'payment_method' => ['required', 'string', 'in:cash,transfer,ewallet,qris'],
+            'voucher_code' => ['nullable', 'string'],
+        ]);
+
+        // Validate stock availability
+        foreach ($data['items'] as $itemData) {
+            $product = Product::findOrFail($itemData['product_id']);
+            if ($product->stok !== null && $product->stok < $itemData['quantity']) {
+                return back()->with('error', 'Stok produk '.$product->nama_barang.' tidak mencukupi.');
             }
         }
 
-        DB::transaction(function () use ($cartItems) {
+        DB::transaction(function () use ($data) {
             $invoiceNumber = 'INV-'.now()->format('Ymd').'-'.Str::upper(Str::random(5));
 
-            foreach ($cartItems as $item) {
-                $product = $item->product;
-
-                $unitPrice = $product->harga ?? 0;
-                $quantity = $item->quantity;
+            foreach ($data['items'] as $itemData) {
+                $product = Product::findOrFail($itemData['product_id']);
+                
+                $unitPrice = $itemData['price'];
+                $quantity = $itemData['quantity'];
                 $total = $unitPrice * $quantity;
 
                 Sale::create([
                     'invoice_number' => $invoiceNumber,
-                    'user_id' => $item->user_id,
+                    'user_id' => Auth::id(),
                     'product_id' => $product->id,
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
@@ -133,10 +159,39 @@ class CartController extends Controller
                 }
             }
 
+            // Clear cart after successful checkout
             Cart::where('user_id', Auth::id())->delete();
         });
 
-        return redirect()->route('cart.index')->with('success', 'Checkout berhasil. Terima kasih telah berbelanja!');
+        return redirect()->route('customer.transactions.index')->with('success', 'Pembayaran berhasil! Terima kasih telah berbelanja.');
+    }
+
+    /**
+     * Buy now - Show checkout page for direct purchase without adding to cart.
+     */
+    public function buyNow(Request $request)
+    {
+        $data = $request->validate([
+            'product_id' => ['required', 'exists:products,id'],
+            'quantity' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $product = Product::findOrFail($data['product_id']);
+
+        if ($product->stok !== null && $product->stok < $data['quantity']) {
+            return back()->with('error', 'Stok produk '.$product->nama_barang.' tidak mencukupi.');
+        }
+
+        $items = [[
+            'id' => $product->id,
+            'name' => $product->nama_barang,
+            'price' => $product->harga,
+            'quantity' => $data['quantity'],
+            'max_stock' => $product->stok,
+            'image' => $product->gambar,
+        ]];
+
+        return view('cart.checkout', compact('items'));
     }
 
     private function authorizeCart(Cart $cart): void

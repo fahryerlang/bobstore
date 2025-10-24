@@ -40,9 +40,14 @@
         @php
             $produkIsActive = request()->routeIs('home');
             $dashboardIsActive = request()->routeIs('dashboard');
-            $productsIsActive = request()->routeIs('products.*');
+            $adminProductsIsActive = request()->routeIs('products.*');
+            $kasirProductsIsActive = request()->routeIs('kasir.products.*');
+            $kasirTransactionsIsActive = request()->routeIs('kasir.transactions.*');
+            $kasirCustomersIsActive = request()->routeIs('kasir.customers.*');
             $salesReportIsActive = request()->routeIs('sales.report*');
             $cartIsActive = request()->routeIs('cart.*');
+            $customerTransactionsIsActive = request()->routeIs('customer.transactions.*');
+            $customerShopIsActive = request()->routeIs('customer.shop');
             $loginIsActive = request()->routeIs('login');
             $registerIsActive = request()->routeIs('register');
         @endphp
@@ -120,15 +125,50 @@
                             </a>
 
                             @if (in_array(auth()->user()->role, ['admin', 'kasir']))
+                                <a href="{{ route('kasir.transactions.index') }}" @click="sidebarOpen = false" @class([
+                                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
+                                    'text-white bg-[#F87B1B] hover:opacity-90' => $kasirTransactionsIsActive,
+                                    'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !$kasirTransactionsIsActive,
+                                ])>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm0 9a1 1 0 011-1h3a1 1 0 011 1v5H4a1 1 0 01-1-1v-4zm7 0a1 1 0 011-1h5a1 1 0 011 1v7h-7v-7z" clip-rule="evenodd" />
+                                    </svg>
+                                    Transaksi Penjualan
+                                </a>
+
+                                <a href="{{ route('kasir.customers.create') }}" @click="sidebarOpen = false" @class([
+                                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
+                                    'text-white bg-[#F87B1B] hover:opacity-90' => $kasirCustomersIsActive,
+                                    'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !$kasirCustomersIsActive,
+                                ])>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8 9a3 3 0 11-6 0 3 3 0 016 0zm8-3a3 3 0 11-6 0 3 3 0 016 0zM6 12a4 4 0 00-4 4 2 2 0 002 2h5a5 5 0 00-.964-2.946A3.978 3.978 0 006 12zm8 0a4 4 0 00-3.036 1.386A4.978 4.978 0 0117 16v2h1a2 2 0 002-2 4 4 0 00-4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                    Daftarkan Member
+                                </a>
+                            @endif
+
+                            @if (auth()->user()->role === 'admin')
                                 <a href="{{ route('products.index') }}" @click="sidebarOpen = false" @class([
                                     'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
-                                    'text-white bg-[#F87B1B] hover:opacity-90' => $productsIsActive,
-                                    'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !$productsIsActive,
+                                    'text-white bg-[#F87B1B] hover:opacity-90' => $adminProductsIsActive,
+                                    'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !$adminProductsIsActive,
                                 ])>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
                                     </svg>
                                     Kelola Produk
+                                </a>
+                            @elseif (auth()->user()->role === 'kasir')
+                                <a href="{{ route('kasir.products.index') }}" @click="sidebarOpen = false" @class([
+                                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
+                                    'text-white bg-[#F87B1B] hover:opacity-90' => $kasirProductsIsActive,
+                                    'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !$kasirProductsIsActive,
+                                ])>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
+                                    </svg>
+                                    Kelola Produk (Kasir)
                                 </a>
                             @endif
 
@@ -158,7 +198,18 @@
                                 </a>
                             @endif
 
-                            @if (in_array(auth()->user()->role, ['admin', 'pembeli']))
+                            @if (auth()->user()->role === 'pembeli')
+                                <a href="{{ route('customer.shop') }}" @click="sidebarOpen = false" @class([
+                                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
+                                    'text-white bg-[#F87B1B] hover:opacity-90' => $customerShopIsActive,
+                                    'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !$customerShopIsActive,
+                                ])>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-1 1h-3l.4 2H16a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-1.994-1.839L3.34 6H3a1 1 0 01-1-1V3zM7 16a2 2 0 104 0 2 2 0 00-4 0zm9 0a2 2 0 11-4 0 2 2 0 014 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    Belanja Produk
+                                </a>
+
                                 <a href="{{ route('cart.index') }}" @click="sidebarOpen = false" @class([
                                     'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
                                     'text-white bg-[#F87B1B] hover:opacity-90' => $cartIsActive,
@@ -168,6 +219,17 @@
                                         <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
                                     </svg>
                                     Keranjang
+                                </a>
+
+                                <a href="{{ route('customer.transactions.index') }}" @click="sidebarOpen = false" @class([
+                                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
+                                    'text-white bg-[#F87B1B] hover:opacity-90' => $customerTransactionsIsActive,
+                                    'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !$customerTransactionsIsActive,
+                                ])>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M6 6a4 4 0 118 0v1h1.5A2.5 2.5 0 0118 9.5v6a2.5 2.5 0 01-2.5 2.5h-9A2.5 2.5 0 014 15.5v-6A2.5 2.5 0 016.5 7H8V6zm2 0a2 2 0 114 0v1H8V6zm0 5a1 1 0 012 0v3a1 1 0 01-2 0v-3z" clip-rule="evenodd" />
+                                    </svg>
+                                    Riwayat Transaksi
                                 </a>
                             @endif
 
@@ -290,5 +352,6 @@
                 }));
             });
         </script>
+        @stack('scripts')
     </body>
 </html>

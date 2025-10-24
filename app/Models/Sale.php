@@ -15,8 +15,10 @@ class Sale extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'sale_transaction_id',
         'invoice_number',
         'user_id',
+        'cashier_id',
         'product_id',
         'quantity',
         'unit_price',
@@ -44,10 +46,26 @@ class Sale extends Model
     }
 
     /**
+     * Get the cashier who handled the sale line.
+     */
+    public function cashier()
+    {
+        return $this->belongsTo(User::class, 'cashier_id');
+    }
+
+    /**
      * Get the product associated with the sale.
      */
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the parent transaction record.
+     */
+    public function transaction()
+    {
+        return $this->belongsTo(SaleTransaction::class, 'sale_transaction_id');
     }
 }

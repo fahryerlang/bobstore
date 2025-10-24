@@ -68,7 +68,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 @if(Auth::user()->role === 'admin')
                     <!-- Admin Cards -->
-                    <a href="{{ route('products.index') }}" class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
+                    <a href="{{ route('kasir.products.index') }}" class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
                         <div class="p-8">
                             <div class="w-16 h-16 bg-gradient-to-br from-[#F87B1B] to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,15 +124,33 @@
 
                 @elseif(Auth::user()->role === 'kasir')
                     <!-- Kasir Cards -->
-                    <a href="{{ route('products.index') }}" class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
+                    <a href="{{ route('kasir.transactions.index') }}" class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
+                        <div class="p-8">
+                            <div class="w-16 h-16 bg-gradient-to-br from-[#F87B1B] to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18v4H3zM5 7h14l-1.5 9h-11zM9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#F87B1B] transition-colors">Transaksi Penjualan</h3>
+                            <p class="text-gray-600 text-sm leading-relaxed">Mulai transaksi, hitung total, dan cetak struk pelanggan.</p>
+                            <div class="mt-4 flex items-center text-[#F87B1B] font-semibold text-sm">
+                                <span class="group-hover:mr-2 transition-all">Proses transaksi</span>
+                                <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="{{ route('kasir.products.index') }}" class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
                         <div class="p-8">
                             <div class="w-16 h-16 bg-gradient-to-br from-[#F87B1B] to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
                             </div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#F87B1B] transition-colors">Kelola Transaksi</h3>
-                            <p class="text-gray-600 text-sm leading-relaxed">Lihat dan kelola penjualan produk</p>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#F87B1B] transition-colors">Kelola Produk Kasir</h3>
+                            <p class="text-gray-600 text-sm leading-relaxed">Cek stok, harga, dan informasi produk untuk transaksi</p>
                             <div class="mt-4 flex items-center text-[#F87B1B] font-semibold text-sm">
                                 <span class="group-hover:mr-2 transition-all">Buka sekarang</span>
                                 <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,17 +160,17 @@
                         </div>
                     </a>
 
-                    <a href="{{ route('home') }}" class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
+                    <a href="{{ route('kasir.customers.create') }}" class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
                         <div class="p-8">
-                            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                            <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M9 11a4 4 0 100-8 4 4 0 000 8zm0 0v10m8-9a4 4 0 11-8 0 4 4 0 018 0z"/>
                                 </svg>
                             </div>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Halaman Utama</h3>
-                            <p class="text-gray-600 text-sm leading-relaxed">Kembali ke beranda toko</p>
-                            <div class="mt-4 flex items-center text-blue-600 font-semibold text-sm">
-                                <span class="group-hover:mr-2 transition-all">Lihat beranda</span>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-emerald-600 transition-colors">Daftarkan Member</h3>
+                            <p class="text-gray-600 text-sm leading-relaxed">Input pelanggan baru agar bisa dipilih sebagai member saat transaksi.</p>
+                            <div class="mt-4 flex items-center text-emerald-600 font-semibold text-sm">
+                                <span class="group-hover:mr-2 transition-all">Tambah member</span>
                                 <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
@@ -180,7 +198,7 @@
 
                 @else
                     <!-- Pembeli Cards -->
-                    <a href="{{ route('catalog.index') }}" class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
+                    <a href="{{ route('customer.shop') }}" class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
                         <div class="p-8">
                             <div class="w-16 h-16 bg-gradient-to-br from-[#F87B1B] to-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,6 +209,24 @@
                             <p class="text-gray-600 text-sm leading-relaxed">Jelajahi katalog produk pilihan</p>
                             <div class="mt-4 flex items-center text-[#F87B1B] font-semibold text-sm">
                                 <span class="group-hover:mr-2 transition-all">Mulai belanja</span>
+                                <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="{{ route('customer.transactions.index') }}" class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
+                        <div class="p-8">
+                            <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7V5a3 3 0 00-3-3H7a3 3 0 00-3 3v12a3 3 0 003 3h6a3 3 0 003-3v-2m3-5h-6m0 0l2 2m-2-2l-2 2"/>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-emerald-600 transition-colors">Riwayat Transaksi</h3>
+                            <p class="text-gray-600 text-sm leading-relaxed">Lihat daftar pesanan yang pernah kamu lakukan dan detail barangnya.</p>
+                            <div class="mt-4 flex items-center text-emerald-600 font-semibold text-sm">
+                                <span class="group-hover:mr-2 transition-all">Lihat riwayat</span>
                                 <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>

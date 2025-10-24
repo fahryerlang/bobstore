@@ -61,12 +61,11 @@
                         </div>
                     </dl>
 
-                    <form method="POST" action="{{ route('cart.checkout') }}" class="mt-6">
-                        @csrf
-                        <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-white bg-[#F87B1B] hover:opacity-90 rounded-lg transition" {{ $items->isEmpty() ? 'disabled' : '' }}>Checkout Sekarang</button>
+                    <form method="GET" action="{{ route('cart.checkout') }}" class="mt-6">
+                        <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-white bg-[#F87B1B] hover:opacity-90 rounded-lg transition" {{ $items->isEmpty() ? 'disabled' : '' }}>Lanjut ke Checkout</button>
                     </form>
 
-                    <p class="mt-3 text-xs text-gray-500">Checkout ini hanya simulasi. Silakan integrasikan dengan sistem pembayaran yang Anda inginkan.</p>
+                    <p class="mt-3 text-xs text-gray-500">Anda akan diarahkan ke halaman pembayaran untuk menyelesaikan transaksi.</p>
                 </div>
             </aside>
         </div>

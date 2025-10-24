@@ -40,17 +40,15 @@ class ProductController extends Controller
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB Max
         ]);
 
-        $data = $request->all();
+        $data = $request->only(['nama_barang', 'harga', 'stok']);
 
         // 2. Handle Upload Gambar
         if ($request->hasFile('gambar')) {
             // Simpan gambar di 'storage/app/public/products'
             // URL publiknya akan menjadi 'storage/products/namafile.jpg'
-            $path = $request->file('gambar')->store('public/products');
+            $path = $request->file('gambar')->store('products', 'public');
             $data['gambar'] = $path; // Simpan path-nya ke data
-        }
-
-        // 3. Simpan ke Database
+        }        // 3. Simpan ke Database
         Product::create($data);
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan.');
@@ -78,22 +76,20 @@ class ProductController extends Controller
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $data = $request->all();
+        $data = $request->only(['nama_barang', 'harga', 'stok']);
 
         // 2. Handle Gambar Baru (Jika ada)
         if ($request->hasFile('gambar')) {
 
             // 2a. Hapus gambar lama (jika ada)
             if ($product->gambar) {
-                Storage::delete($product->gambar);
+                Storage::disk('public')->delete($product->gambar);
             }
 
             // 2b. Simpan gambar baru
-            $path = $request->file('gambar')->store('public/products');
+            $path = $request->file('gambar')->store('products', 'public');
             $data['gambar'] = $path;
-        }
-
-        // 3. Update data di Database
+        }        // 3. Update data di Database
         $product->update($data);
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui.');
@@ -106,7 +102,7 @@ class ProductController extends Controller
     {
         // 1. Hapus gambar dari storage (jika ada)
         if ($product->gambar) {
-            Storage::delete($product->gambar);
+            Storage::disk('public')->delete($product->gambar);
         }
 
         // 2. Hapus data dari database

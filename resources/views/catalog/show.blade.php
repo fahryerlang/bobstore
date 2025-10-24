@@ -48,36 +48,48 @@
                 <div class="mt-8">
                     @auth
                         @if (in_array(auth()->user()->role, ['admin', 'pembeli']))
-                            <form method="POST" action="{{ route('cart.store') }}" class="space-y-4">
-                                @csrf
-                                <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                <div>
+                            <div class="space-y-4">
+                                <!-- Form untuk input jumlah yang shared -->
+                                <div x-data="{ quantity: 1 }">
                                     <label class="block text-sm font-semibold text-gray-700 mb-2" for="quantity">Jumlah</label>
                                     <input
                                         id="quantity"
-                                        name="quantity"
+                                        x-model="quantity"
                                         type="number"
                                         min="1"
                                         max="{{ $product->stok }}"
-                                        value="1"
                                         class="block w-32 rounded-lg border-gray-300 focus:border-[#F87B1B] focus:ring-[#F87B1B] text-sm shadow-sm"
                                     >
+                                    
+                                    <div class="flex flex-wrap gap-3 mt-4">
+                                        <!-- Form Tambah ke Keranjang -->
+                                        <form method="POST" action="{{ route('cart.store') }}">
+                                            @csrf
+                                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                            <input type="hidden" name="quantity" x-bind:value="quantity">
+                                            <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-white bg-[#F87B1B] hover:opacity-90 rounded-lg transition shadow-md hover:shadow-lg">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                                                </svg>
+                                                Masukkan ke Keranjang
+                                            </button>
+                                        </form>
+
+                                        <!-- Form Beli Sekarang -->
+                                        <form method="POST" action="{{ route('cart.buyNow') }}">
+                                            @csrf
+                                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                            <input type="hidden" name="quantity" x-bind:value="quantity">
+                                            <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white rounded-lg transition">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                                                </svg>
+                                                Beli Sekarang
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
-                                <div class="flex flex-wrap gap-3">
-                                    <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-white bg-[#F87B1B] hover:opacity-90 rounded-lg transition shadow-md hover:shadow-lg">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                                        </svg>
-                                        Masukkan ke Keranjang
-                                    </button>
-                                    <a href="{{ route('cart.index') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white rounded-lg transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
-                                        </svg>
-                                        Beli Sekarang
-                                    </a>
-                                </div>
-                            </form>
+                            </div>
                         @else
                             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-600">
                                 Peran Anda tidak memiliki akses untuk membeli produk.
@@ -104,12 +116,12 @@
                                 </svg>
                                 Masukkan ke Keranjang
                             </button>
-                            <button type="button" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white rounded-lg transition" @click="$dispatch('notify', 'Silakan masuk terlebih dahulu sebelum melanjutkan pembelian.')">
+                            <a href="{{ route('login') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white rounded-lg transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
                                 </svg>
                                 Beli Sekarang
-                            </button>
+                            </a>
                         </div>
                     @endauth
                 </div>

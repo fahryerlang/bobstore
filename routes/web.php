@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\SalesReportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Kasir\ProductController as KasirProductController;
+use App\Http\Controllers\Kasir\CustomerRegistrationController;
+use App\Http\Controllers\Kasir\TransactionController as KasirTransactionController;
+use App\Http\Controllers\Customer\TransactionController as CustomerTransactionController;
 use App\Http\Controllers\ProductCatalogController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\HomeController;
@@ -59,16 +63,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 // Grup untuk Kasir
 // Middleware 'role:admin,kasir' berarti Admin DAN Kasir bisa akses.
 Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
+    Route::get('/kasir/transaksi', [KasirTransactionController::class, 'index'])->name('kasir.transactions.index');
+    Route::get('/kasir/transaksi/cari-produk', [KasirTransactionController::class, 'searchProducts'])->name('kasir.transactions.search');
+    Route::post('/kasir/transaksi', [KasirTransactionController::class, 'store'])->name('kasir.transactions.store');
+    Route::get('/kasir/transaksi/{transaction:invoice_number}', [KasirTransactionController::class, 'show'])->name('kasir.transactions.show');
 
-    Route::get('/kasir/transaksi', function () {
-        return '<h1>Halaman Proses Transaksi Kasir</h1>';
-    })->name('kasir.transaksi');
+    Route::get('/kasir/member-baru', [CustomerRegistrationController::class, 'create'])->name('kasir.customers.create');
+    Route::post('/kasir/member-baru', [CustomerRegistrationController::class, 'store'])->name('kasir.customers.store');
+
+    Route::get('/kasir/produk', [KasirProductController::class, 'index'])->name('kasir.products.index');
 
     Route::get('/admin/laporan-penjualan', [SalesReportController::class, 'index'])->name('sales.report');
     Route::get('/admin/laporan-penjualan/cetak', [SalesReportController::class, 'print'])->name('sales.report.print');
-
-    // Nanti di sini Anda letakkan route untuk memproses pembayaran
-    // Route::post('/kasir/proses-bayar', [TransactionController::class, 'store']);
 
 });
 
@@ -77,11 +83,16 @@ Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
 // Middleware 'role:admin,pembeli' berarti Admin DAN Pembeli bisa akses.
 // (Admin harus bisa melihat apa yang pembeli lihat)
 Route::middleware(['auth', 'role:admin,pembeli'])->group(function () {
+    Route::get('/belanja', [ProductCatalogController::class, 'index'])->name('customer.shop');
     Route::get('/keranjang', [CartController::class, 'index'])->name('cart.index');
     Route::post('/keranjang', [CartController::class, 'store'])->name('cart.store');
     Route::patch('/keranjang/{cart}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/keranjang/{cart}', [CartController::class, 'destroy'])->name('cart.destroy');
-    Route::post('/keranjang/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+    Route::get('/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+    Route::post('/checkout', [CartController::class, 'processCheckout'])->name('cart.processCheckout');
+    Route::post('/beli-langsung', [CartController::class, 'buyNow'])->name('cart.buyNow');
+
+    Route::get('/riwayat-transaksi', [CustomerTransactionController::class, 'index'])->name('customer.transactions.index');
 
 });
 
