@@ -33,6 +33,7 @@ class TransactionController extends Controller
 
     /**
      * Handle AJAX search for products.
+     * Returns products from the same catalog as admin's product management.
      */
     public function searchProducts(Request $request): JsonResponse
     {
@@ -42,7 +43,9 @@ class TransactionController extends Controller
 
         $query = trim((string) $request->input('q'));
 
+        // Get products from the same table as admin's product catalog
         $products = Product::query()
+            ->where('stok', '>', 0) // Only show products with stock available
             ->when($query !== '', function ($builder) use ($query) {
                 $builder->where(function ($sub) use ($query) {
                     $sub->where('nama_barang', 'like', "%{$query}%");
@@ -54,8 +57,8 @@ class TransactionController extends Controller
             })
             ->orderByDesc('stok')
             ->orderBy('nama_barang')
-            ->limit(12)
-            ->get(['id', 'nama_barang', 'harga', 'stok']);
+            ->limit(20) // Increased limit to show more products
+            ->get(['id', 'nama_barang', 'harga', 'stok', 'gambar']);
 
         return response()->json(
             $products->map(fn ($product) => [
@@ -63,6 +66,7 @@ class TransactionController extends Controller
                 'nama_barang' => $product->nama_barang,
                 'harga' => (float) $product->harga,
                 'stok' => (int) $product->stok,
+                'gambar' => $product->gambar,
             ])
         );
     }

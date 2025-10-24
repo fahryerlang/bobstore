@@ -14,6 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
         ]);
+        
+        // Add global middleware to clear stale sessions
+        $middleware->web(append: [
+            \App\Http\Middleware\ClearStaleSession::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
