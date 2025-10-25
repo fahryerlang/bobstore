@@ -273,12 +273,13 @@
         suggestionBox.innerHTML = products.map((product) => {
             const payload = encodeURIComponent(JSON.stringify(product));
             const imagePath = product.gambar ? `/storage/${product.gambar}` : '/images/no-image.png';
+            const sku = 'SKU-' + String(product.id).padStart(6, '0');
             return `
             <button type="button" class="flex w-full items-center gap-4 px-4 py-3 text-left text-sm hover:bg-orange-50 transition-colors" data-product="${payload}">
                 <img src="${imagePath}" alt="${product.nama_barang}" class="w-12 h-12 object-cover rounded-lg border border-gray-200" onerror="this.src='/images/no-image.png'">
                 <div class="flex-1 min-w-0">
                     <span class="block font-semibold text-gray-900 truncate">${product.nama_barang}</span>
-                    <span class="block text-xs text-gray-500">ID: ${product.id} · Stok: ${product.stok}</span>
+                    <span class="block text-xs text-gray-500">${sku} · Stok: ${product.stok}</span>
                 </div>
                 <span class="flex-shrink-0 font-semibold text-[#F87B1B]">${formatCurrency(product.harga)}</span>
             </button>

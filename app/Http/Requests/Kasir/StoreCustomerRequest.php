@@ -25,6 +25,8 @@ class StoreCustomerRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
             'phone' => ['required', 'string', 'min:6', 'max:25', 'unique:users,phone'],
             'address' => ['required', 'string', 'max:500'],
         ];
@@ -52,6 +54,9 @@ class StoreCustomerRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'email.unique' => 'Email sudah terdaftar sebagai member.',
+            'email.email' => 'Format email tidak valid.',
+            'password.min' => 'Password harus minimal 8 karakter.',
             'phone.unique' => 'Nomor HP sudah terdaftar sebagai member.',
         ];
     }

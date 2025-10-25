@@ -14,6 +14,7 @@ use App\Http\Controllers\Customer\TransactionController as CustomerTransactionCo
 use App\Http\Controllers\ProductCatalogController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ExportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,6 +76,26 @@ Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
 
     Route::get('/admin/laporan-penjualan', [SalesReportController::class, 'index'])->name('sales.report');
     Route::get('/admin/laporan-penjualan/cetak', [SalesReportController::class, 'print'])->name('sales.report.print');
+
+    // Export page
+    Route::get('/export', function () {
+        return view('exports.index');
+    })->name('export.index');
+
+    // Export routes for Admin and Kasir
+    Route::prefix('export')->name('export.')->group(function () {
+        // Products Export
+        Route::get('/products/excel', [ExportController::class, 'exportProductsExcel'])->name('products.excel');
+        Route::get('/products/pdf', [ExportController::class, 'exportProductsPdf'])->name('products.pdf');
+        
+        // Sales Export
+        Route::get('/sales/excel', [ExportController::class, 'exportSalesExcel'])->name('sales.excel');
+        Route::get('/sales/pdf', [ExportController::class, 'exportSalesPdf'])->name('sales.pdf');
+        
+        // Customers Export
+        Route::get('/customers/excel', [ExportController::class, 'exportCustomersExcel'])->name('customers.excel');
+        Route::get('/customers/pdf', [ExportController::class, 'exportCustomersPdf'])->name('customers.pdf');
+    });
 
 });
 

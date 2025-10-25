@@ -10,12 +10,7 @@
                 <h1 class="text-3xl font-bold text-gray-900">Daftarkan Pelanggan Baru</h1>
                 <p class="text-sm text-gray-600 mt-1">Masukkan data pelanggan baru untuk menjadi member toko. Data akan muncul otomatis pada pilihan pelanggan saat transaksi kasir.</p>
             </div>
-            <div class="flex items-center gap-2 text-xs text-orange-500 bg-orange-50 px-3 py-2 rounded-full">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 18a6 6 0 100-12 6 6 0 000 12z" />
-                </svg>
-                <span>Password awal otomatis menggunakan nomor HP.</span>
-            </div>
+
         </div>
 
         <div class="bg-white shadow-xl rounded-3xl border border-orange-100 overflow-hidden">
@@ -38,6 +33,16 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Peran</label>
                         <div class="rounded-2xl border border-dashed border-orange-200 bg-orange-50/60 px-4 py-3 text-sm text-[#F87B1B] font-semibold">Member (Pembeli)</div>
                     </div>
+                    <div class="sm:col-span-2">
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="email" name="email" value="{{ old('email') }}" required class="w-full rounded-2xl border-gray-200 focus:border-[#F87B1B] focus:ring-[#F87B1B] text-sm" placeholder="contoh@email.com">
+                        <p class="mt-2 text-xs text-gray-500">Email harus unik dan akan digunakan untuk login.</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="password" name="password" required class="w-full rounded-2xl border-gray-200 focus:border-[#F87B1B] focus:ring-[#F87B1B] text-sm" placeholder="Minimal 8 karakter">
+                        <p class="mt-2 text-xs text-gray-500">Masukkan password untuk member baru (minimal 8 karakter).</p>
+                    </div>
                 </div>
                 <div>
                     <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Alamat</label>
@@ -47,8 +52,8 @@
                 <div class="bg-orange-50/70 rounded-2xl px-4 py-4 text-xs text-gray-600">
                     <p class="font-semibold text-gray-800">Catatan:</p>
                     <ul class="mt-2 list-disc list-inside space-y-1">
-                        <li>Email member akan dibuat otomatis berdasarkan nomor HP.</li>
-                        <li>Password awal member adalah kombinasi nomor HP (maksimal 8 digit terakhir). Sarankan pelanggan mengganti password saat pertama kali login.</li>
+                        <li>Email member harus unik dan akan digunakan untuk login.</li>
+                        <li>Password harus minimal 8 karakter untuk keamanan akun.</li>
                         <li>Pelanggan baru langsung muncul di daftar pelanggan pada halaman transaksi kasir.</li>
                     </ul>
                 </div>

@@ -124,7 +124,7 @@
                                 Dashboard
                             </a>
 
-                            @if (in_array(auth()->user()->role, ['admin', 'kasir']))
+                            @if (auth()->user()->role === 'kasir')
                                 <a href="{{ route('kasir.transactions.index') }}" @click="sidebarOpen = false" @class([
                                     'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
                                     'text-white bg-[#F87B1B] hover:opacity-90' => $kasirTransactionsIsActive,
@@ -134,17 +134,6 @@
                                         <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm0 9a1 1 0 011-1h3a1 1 0 011 1v5H4a1 1 0 01-1-1v-4zm7 0a1 1 0 011-1h5a1 1 0 011 1v7h-7v-7z" clip-rule="evenodd" />
                                     </svg>
                                     Transaksi Penjualan
-                                </a>
-
-                                <a href="{{ route('kasir.customers.create') }}" @click="sidebarOpen = false" @class([
-                                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
-                                    'text-white bg-[#F87B1B] hover:opacity-90' => $kasirCustomersIsActive,
-                                    'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !$kasirCustomersIsActive,
-                                ])>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M8 9a3 3 0 11-6 0 3 3 0 016 0zm8-3a3 3 0 11-6 0 3 3 0 016 0zM6 12a4 4 0 00-4 4 2 2 0 002 2h5a5 5 0 00-.964-2.946A3.978 3.978 0 006 12zm8 0a4 4 0 00-3.036 1.386A4.978 4.978 0 0117 16v2h1a2 2 0 002-2 4 4 0 00-4-4z" clip-rule="evenodd" />
-                                    </svg>
-                                    Daftarkan Member
                                 </a>
                             @endif
 
@@ -185,18 +174,69 @@
                                 </a>
                             @endif
 
-                            @if (auth()->user()->role === 'admin')
-                                <a href="{{ route('users.index') }}" @click="sidebarOpen = false" @class([
-                                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
-                                    'text-white bg-[#F87B1B] hover:opacity-90' => request()->routeIs('users.*'),
-                                    'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !request()->routeIs('users.*'),
-                                ])>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                                    </svg>
-                                    Kelola Pengguna
-                                </a>
-                            @endif
+                            <!-- Dropdown Menu untuk Manajemen Pengguna -->
+                            <div x-data="{ open: {{ request()->routeIs('users.*') || request()->routeIs('kasir.customers.*') ? 'true' : 'false' }} }" 
+                                 @mouseenter="open = true" 
+                                 @mouseleave="open = false" 
+                                 class="relative">
+                                @if (auth()->user()->role === 'admin')
+                                    <div @class([
+                                        'flex items-center justify-between w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg cursor-pointer',
+                                        'text-white bg-[#F87B1B] hover:opacity-90' => request()->routeIs('users.*') || request()->routeIs('kasir.customers.*'),
+                                        'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !request()->routeIs('users.*') && !request()->routeIs('kasir.customers.*'),
+                                    ])>
+                                        <span class="flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                                            </svg>
+                                            Manajemen Pengguna
+                                        </span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" :class="open ? 'rotate-180' : ''" class="h-4 w-4 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div x-show="open" 
+                                         x-transition:enter="transition ease-out duration-200"
+                                         x-transition:enter-start="opacity-0 transform scale-95"
+                                         x-transition:enter-end="opacity-100 transform scale-100"
+                                         x-transition:leave="transition ease-in duration-150"
+                                         x-transition:leave-start="opacity-100 transform scale-100"
+                                         x-transition:leave-end="opacity-0 transform scale-95"
+                                         class="mt-2 space-y-2 pl-4">
+                                        <a href="{{ route('users.index') }}" @click="sidebarOpen = false" @class([
+                                            'flex items-center gap-2 w-full px-4 py-2 text-sm font-medium rounded-lg transition',
+                                            'text-white bg-orange-500' => request()->routeIs('users.*'),
+                                            'text-gray-700 hover:bg-orange-50 hover:text-[#F87B1B]' => !request()->routeIs('users.*'),
+                                        ])>
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                                            </svg>
+                                            Kelola Pengguna
+                                        </a>
+                                        <a href="{{ route('kasir.customers.create') }}" @click="sidebarOpen = false" @class([
+                                            'flex items-center gap-2 w-full px-4 py-2 text-sm font-medium rounded-lg transition',
+                                            'text-white bg-orange-500' => request()->routeIs('kasir.customers.*'),
+                                            'text-gray-700 hover:bg-orange-50 hover:text-[#F87B1B]' => !request()->routeIs('kasir.customers.*'),
+                                        ])>
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M8 9a3 3 0 11-6 0 3 3 0 016 0zm8-3a3 3 0 11-6 0 3 3 0 016 0zM6 12a4 4 0 00-4 4 2 2 0 002 2h5a5 5 0 00-.964-2.946A3.978 3.978 0 006 12zm8 0a4 4 0 00-3.036 1.386A4.978 4.978 0 0117 16v2h1a2 2 0 002-2 4 4 0 00-4-4z" clip-rule="evenodd" />
+                                            </svg>
+                                            Daftarkan Member
+                                        </a>
+                                    </div>
+                                @elseif (auth()->user()->role === 'kasir')
+                                    <a href="{{ route('kasir.customers.create') }}" @click="sidebarOpen = false" @class([
+                                        'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
+                                        'text-white bg-[#F87B1B] hover:opacity-90' => $kasirCustomersIsActive,
+                                        'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !$kasirCustomersIsActive,
+                                    ])>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M8 9a3 3 0 11-6 0 3 3 0 016 0zm8-3a3 3 0 11-6 0 3 3 0 016 0zM6 12a4 4 0 00-4 4 2 2 0 002 2h5a5 5 0 00-.964-2.946A3.978 3.978 0 006 12zm8 0a4 4 0 00-3.036 1.386A4.978 4.978 0 0117 16v2h1a2 2 0 002-2 4 4 0 00-4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                        Daftarkan Member
+                                    </a>
+                                @endif
+                            </div>
 
                             @if (auth()->user()->role === 'pembeli')
                                 <a href="{{ route('customer.shop') }}" @click="sidebarOpen = false" @class([
