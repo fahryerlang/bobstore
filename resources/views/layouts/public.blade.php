@@ -48,6 +48,7 @@
             $cartIsActive = request()->routeIs('cart.*');
             $customerTransactionsIsActive = request()->routeIs('customer.transactions.*');
             $customerShopIsActive = request()->routeIs('customer.shop');
+            $profileIsActive = request()->routeIs('profile.*');
             $loginIsActive = request()->routeIs('login');
             $registerIsActive = request()->routeIs('register');
         @endphp
@@ -289,7 +290,7 @@
                 <!-- Info User di Bagian Bawah (hanya untuk yang sudah login) -->
                 @auth
                     <div class="mt-6 pt-6 border-t border-gray-200">
-                        <div class="rounded-xl bg-gradient-to-r from-[#F87B1B] to-orange-600 text-white p-4 shadow-md">
+                        <a href="{{ route('profile.edit') }}" @click="sidebarOpen = false" class="block rounded-xl bg-gradient-to-r from-[#F87B1B] to-orange-600 text-white p-4 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#F87B1B]" viewBox="0 0 20 20" fill="currentColor">
@@ -309,7 +310,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 @endauth
             </div>

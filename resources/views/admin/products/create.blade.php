@@ -112,30 +112,80 @@
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+                    </div>
 
-                        <!-- Satuan -->
+                    <!-- Kategori dan Subkategori -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Kategori -->
                         <div>
-                            <label for="satuan" class="block text-sm font-semibold text-gray-700 mb-2">
-                                Satuan <span class="text-red-500">*</span>
+                            <label for="category_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Kategori
                             </label>
                             <select 
-                                name="satuan" 
-                                id="satuan" 
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200 @error('satuan') border-red-500 @enderror"
-                                required
+                                name="category_id" 
+                                id="category_id" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200 @error('category_id') border-red-500 @enderror"
+                                onchange="loadSubcategories(this.value)"
                             >
-                                <option value="">Pilih Satuan</option>
-                                <option value="pcs" {{ old('satuan') == 'pcs' ? 'selected' : '' }}>Pcs (Pieces)</option>
-                                <option value="unit" {{ old('satuan') == 'unit' ? 'selected' : '' }}>Unit</option>
-                                <option value="box" {{ old('satuan') == 'box' ? 'selected' : '' }}>Box</option>
-                                <option value="kg" {{ old('satuan') == 'kg' ? 'selected' : '' }}>Kg (Kilogram)</option>
-                                <option value="liter" {{ old('satuan') == 'liter' ? 'selected' : '' }}>Liter</option>
-                                <option value="meter" {{ old('satuan') == 'meter' ? 'selected' : '' }}>Meter</option>
+                                <option value="">Pilih Kategori</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
                             </select>
-                            @error('satuan')
+                            @error('category_id')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+
+                        <!-- Subkategori -->
+                        <div>
+                            <label for="subcategory_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Subkategori
+                            </label>
+                            <select 
+                                name="subcategory_id" 
+                                id="subcategory_id" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200 @error('subcategory_id') border-red-500 @enderror"
+                            >
+                                <option value="">Pilih Subkategori</option>
+                                @foreach($subcategories as $subcategory)
+                                    <option value="{{ $subcategory->id }}" data-category="{{ $subcategory->category_id }}" {{ old('subcategory_id') == $subcategory->id ? 'selected' : '' }}>
+                                        {{ $subcategory->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('subcategory_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- Tags -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Tag Produk
+                        </label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            @foreach($tags as $tag)
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                                    <input 
+                                        type="checkbox" 
+                                        name="tags[]" 
+                                        value="{{ $tag->id }}"
+                                        {{ in_array($tag->id, old('tags', [])) ? 'checked' : '' }}
+                                        class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                                    >
+                                    <span class="ml-2 text-sm font-medium" style="color: {{ $tag->color }}">
+                                        {{ $tag->name }}
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('tags')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Gambar Produk -->
@@ -217,5 +267,36 @@
             reader.readAsDataURL(file);
         }
     }
+
+    function loadSubcategories(categoryId) {
+        const subcategorySelect = document.getElementById('subcategory_id');
+        const options = subcategorySelect.querySelectorAll('option');
+        
+        // Reset subcategory select
+        subcategorySelect.value = '';
+        
+        // Show/hide options based on selected category
+        options.forEach(option => {
+            if (option.value === '') {
+                option.style.display = 'block';
+                return;
+            }
+            
+            const optionCategory = option.getAttribute('data-category');
+            if (categoryId === '' || optionCategory === categoryId) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('category_id');
+        if (categorySelect.value) {
+            loadSubcategories(categorySelect.value);
+        }
+    });
 </script>
 @endsection

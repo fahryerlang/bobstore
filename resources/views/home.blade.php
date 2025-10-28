@@ -1,4 +1,4 @@
-@extends('layouts.public')
+@extends('layouts.landing')
 
 @section('title', 'Beranda')
 
@@ -386,12 +386,12 @@
                 </a>
             </div>
 
-                <div class="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                <div class="mt-8 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                     @forelse ($products as $product)
                         <div class="bg-white rounded-2xl shadow-md border border-gray-100 hover:shadow-xl hover:scale-105 transition-all duration-300 overflow-hidden flex flex-col">
                             <a href="{{ route('catalog.show', $product) }}" class="relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 aspect-[4/3] block group">
                                 @if ($product->gambar)
-                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($product->gambar) }}" alt="{{ $product->nama_barang }}" class="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500" loading="lazy">
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($product->gambar) }}" alt="{{ $product->nama_barang }}" class="object-cover w-full h-full" loading="lazy">
                                 @else
                                     <div class="absolute inset-0 flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
