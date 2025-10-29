@@ -49,7 +49,17 @@
                                     <p class="text-xs text-gray-500">ID: {{ $product->id }}</p>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-sm font-bold text-gray-900">Rp {{ number_format($product->harga, 0, ',', '.') }}</span>
+                                    @php
+                                        $pricing = $product->discountSummary();
+                                    @endphp
+                                    @if ($pricing['applies'])
+                                        <div class="flex flex-col">
+                                            <span class="text-sm font-bold text-[#F87B1B]">Rp {{ number_format($pricing['unit_price'], 0, ',', '.') }}</span>
+                                            <span class="text-xs text-gray-400 line-through">Rp {{ number_format($pricing['base_unit_price'], 0, ',', '.') }}</span>
+                                        </div>
+                                    @else
+                                        <span class="text-sm font-bold text-gray-900">Rp {{ number_format($product->harga, 0, ',', '.') }}</span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $product->stok > 10 ? 'bg-green-100 text-green-700' : ($product->stok > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') }}">

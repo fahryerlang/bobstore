@@ -21,7 +21,18 @@
                                     <h2 class="text-lg font-semibold text-gray-900">
                                         {{ optional($item->product)->nama_barang ?? 'Produk tidak tersedia' }}
                                     </h2>
-                                    <div class="mt-2 text-sm text-gray-500">Harga: Rp {{ number_format(optional($item->product)->harga ?? 0, 0, ',', '.') }}</div>
+                                    @php
+                                        $pricing = $item->pricing_summary ?? null;
+                                    @endphp
+                                    <div class="mt-2 text-sm text-gray-500">
+                                        @if ($pricing && $pricing['total_discount'] > 0)
+                                            <span class="text-xs inline-flex items-center px-2 py-0.5 bg-red-100 text-red-600 font-semibold rounded-full">Diskon</span>
+                                            <span class="text-base font-bold text-[#F87B1B] ml-2">Rp {{ number_format($pricing['unit_price'], 0, ',', '.') }}</span>
+                                            <span class="text-xs text-gray-400 line-through ml-2">Rp {{ number_format($pricing['base_unit_price'], 0, ',', '.') }}</span>
+                                        @else
+                                            Harga: Rp {{ number_format(optional($item->product)->harga ?? 0, 0, ',', '.') }}
+                                        @endif
+                                    </div>
                                 </div>
                                 <div class="flex items-center gap-4">
                                     <form method="POST" action="{{ route('cart.update', $item) }}" class="flex items-center gap-2">
@@ -49,8 +60,14 @@
                     <dl class="mt-4 space-y-2 text-sm text-gray-600">
                         <div class="flex justify-between">
                             <dt>Subtotal</dt>
-                            <dd>Rp {{ number_format($total, 0, ',', '.') }}</dd>
+                            <dd>Rp {{ number_format($subtotal, 0, ',', '.') }}</dd>
                         </div>
+                        @if ($discountTotal > 0)
+                            <div class="flex justify-between text-green-600">
+                                <dt>Diskon</dt>
+                                <dd>- Rp {{ number_format($discountTotal, 0, ',', '.') }}</dd>
+                            </div>
+                        @endif
                         <div class="flex justify-between">
                             <dt>Pajak</dt>
                             <dd class="text-gray-400">—</dd>

@@ -53,7 +53,15 @@
                                     <!-- Product Info -->
                                     <div class="flex-1">
                                         <h3 class="font-semibold text-gray-900">{{ $item['name'] }}</h3>
-                                        <p class="text-sm text-gray-500 mt-1">Rp {{ number_format($item['price'], 0, ',', '.') }} / pcs</p>
+                                        @if ($item['total_discount'] > 0)
+                                            <p class="text-sm text-gray-500 mt-1">
+                                                <span class="text-base font-bold text-[#F87B1B]">Rp {{ number_format($item['unit_price'], 0, ',', '.') }}</span>
+                                                <span class="text-xs text-gray-400 line-through ml-2">Rp {{ number_format($item['base_price'], 0, ',', '.') }}</span>
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-xs font-semibold">-{{ number_format($item['discount_percentage'], 0) }}%</span>
+                                            </p>
+                                        @else
+                                            <p class="text-sm text-gray-500 mt-1">Rp {{ number_format($item['unit_price'], 0, ',', '.') }} / pcs</p>
+                                        @endif
                                         
                                         <!-- Quantity Adjuster -->
                                         <div class="flex items-center gap-3 mt-3">
@@ -72,14 +80,13 @@
                                                 </button>
                                             </div>
                                             <input type="hidden" name="items[{{ $item['id'] }}][product_id]" value="{{ $item['id'] }}">
-                                            <input type="hidden" name="items[{{ $item['id'] }}][price]" value="{{ $item['price'] }}">
                                         </div>
                                     </div>
 
                                     <!-- Subtotal -->
                                     <div class="text-right">
                                         <p class="text-sm text-gray-500">Subtotal</p>
-                                        <p class="text-lg font-bold text-[#F87B1B]" x-text="formatPrice(quantities[{{ $item['id'] }}] * {{ $item['price'] }})"></p>
+                                        <p class="text-lg font-bold text-[#F87B1B]" x-text="formatPrice(quantities[{{ $item['id'] }}] * finalPrices[{{ $item['id'] }}])"></p>
                                     </div>
                                 </div>
                             @endforeach
@@ -164,7 +171,7 @@
                                         Terapkan
                                     </button>
                                 </div>
-                                <p class="text-xs text-green-600 mt-2" x-show="voucherApplied" x-cloak>✓ Voucher berhasil diterapkan!</p>
+                                <p class="text-xs text-green-600 mt-2" x-show="voucherApplied" x-text="voucherMessage" x-cloak></p>
                             </div>
 
                             <div class="border-t border-gray-200 pt-4 space-y-3">
@@ -173,14 +180,19 @@
                                     <span class="font-semibold" x-text="formatPrice(subtotal)"></span>
                                 </div>
                                 
-                                <div class="flex justify-between text-sm" x-show="discount > 0" x-cloak>
-                                    <span class="text-green-600">Diskon</span>
-                                    <span class="font-semibold text-green-600">- <span x-text="formatPrice(discount)"></span></span>
+                                <div class="flex justify-between text-sm" x-show="automaticDiscount > 0" x-cloak>
+                                    <span class="text-green-600">Diskon Otomatis</span>
+                                    <span class="font-semibold text-green-600">- <span x-text="formatPrice(automaticDiscount)"></span></span>
+                                </div>
+
+                                <div class="flex justify-between text-sm" x-show="couponDiscount > 0" x-cloak>
+                                    <span class="text-green-600">Diskon Voucher</span>
+                                    <span class="font-semibold text-green-600">- <span x-text="formatPrice(couponDiscount)"></span></span>
                                 </div>
 
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Pajak (PPN 11%)</span>
-                                    <span class="font-semibold" x-text="formatPrice(tax)"></span>
+                                    <span class="font-semibold text-gray-400">—</span>
                                 </div>
 
                                 <div class="border-t border-gray-200 pt-3 flex justify-between">
@@ -210,26 +222,33 @@
 function checkoutForm() {
     return {
         quantities: {!! json_encode(collect($items)->pluck('quantity', 'id')->toArray()) !!},
-        prices: {!! json_encode(collect($items)->pluck('price', 'id')->toArray()) !!},
+        basePrices: {!! json_encode(collect($items)->pluck('base_price', 'id')->toArray()) !!},
+        finalPrices: {!! json_encode(collect($items)->pluck('unit_price', 'id')->toArray()) !!},
         paymentMethod: 'cash',
         voucherCode: '',
         voucherApplied: false,
-        discount: 0,
+        voucherMessage: '',
+        couponDiscount: 0,
         
         get subtotal() {
             let total = 0;
             for (let id in this.quantities) {
-                total += this.quantities[id] * this.prices[id];
+                total += this.quantities[id] * this.basePrices[id];
             }
             return total;
         },
         
-        get tax() {
-            return Math.round((this.subtotal - this.discount) * 0.11);
+        get automaticDiscount() {
+            let total = 0;
+            for (let id in this.quantities) {
+                const diff = Math.max(0, this.basePrices[id] - this.finalPrices[id]);
+                total += diff * this.quantities[id];
+            }
+            return total;
         },
         
         get total() {
-            return this.subtotal - this.discount + this.tax;
+            return Math.max(0, this.subtotal - this.automaticDiscount - this.couponDiscount);
         },
         
         increaseQuantity(id, maxStock) {
@@ -245,26 +264,15 @@ function checkoutForm() {
         },
         
         applyVoucher() {
-            // Simulasi voucher
-            const vouchers = {
-                'DISKON10': 10, // 10% discount
-                'DISKON20': 20, // 20% discount
-                'HEMAT50K': 50000, // Fixed 50k discount
-            };
-            
-            const code = this.voucherCode.toUpperCase();
-            if (vouchers[code]) {
-                this.voucherApplied = true;
-                if (code.includes('DISKON')) {
-                    this.discount = Math.round(this.subtotal * vouchers[code] / 100);
-                } else {
-                    this.discount = vouchers[code];
-                }
-            } else {
-                alert('Kode voucher tidak valid');
+            if (!this.voucherCode) {
                 this.voucherApplied = false;
-                this.discount = 0;
+                this.voucherMessage = 'Masukkan kode voucher terlebih dahulu.';
+                return;
             }
+
+            this.voucherApplied = true;
+            this.voucherMessage = 'Kode voucher akan diverifikasi saat pembayaran.';
+            this.couponDiscount = 0;
         },
         
         formatPrice(value) {

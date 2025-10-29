@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
+use App\Models\Coupon;
+use App\Models\CouponUsage;
+use App\Models\DiscountRule;
 use App\Models\Product;
 use App\Models\Sale;
 use Illuminate\Http\RedirectResponse;
@@ -23,14 +26,33 @@ class CartController extends Controller
             ->where('user_id', Auth::id())
             ->get();
 
-        $total = $cartItems->sum(function (Cart $item) {
-            $price = optional($item->product)->harga ?? 0;
-            return $price * $item->quantity;
+        $summary = [
+            'subtotal' => 0.0,
+            'discount' => 0.0,
+            'total' => 0.0,
+        ];
+
+        $cartItems->each(function (Cart $item) use (&$summary) {
+            $product = $item->product;
+
+            if (! $product) {
+                return;
+            }
+
+            $pricing = $product->discountSummary($item->quantity);
+
+            $item->pricing_summary = $pricing;
+
+            $summary['subtotal'] += $pricing['base_total_price'];
+            $summary['discount'] += $pricing['total_discount'];
+            $summary['total'] += $pricing['total_price'];
         });
 
         return view('cart.index', [
             'items' => $cartItems,
-            'total' => $total,
+            'subtotal' => round($summary['subtotal'], 2),
+            'discountTotal' => round($summary['discount'], 2),
+            'total' => round($summary['total'], 2),
         ]);
     }
 
@@ -98,18 +120,49 @@ class CartController extends Controller
             return redirect()->route('cart.index')->with('error', 'Keranjang masih kosong.');
         }
 
-        $items = $cartItems->map(function ($item) {
-            return [
-                'id' => $item->product_id,
-                'name' => $item->product->nama_barang,
-                'price' => $item->product->harga,
-                'quantity' => $item->quantity,
-                'max_stock' => $item->product->stok,
-                'image' => $item->product->gambar,
-            ];
-        })->toArray();
+        $items = [];
+        $summary = [
+            'subtotal' => 0.0,
+            'discount' => 0.0,
+            'total' => 0.0,
+        ];
 
-        return view('cart.checkout', compact('items'));
+        foreach ($cartItems as $item) {
+            $product = $item->product;
+
+            if (! $product) {
+                continue;
+            }
+
+            $pricing = $product->discountSummary($item->quantity);
+
+            $items[] = [
+                'id' => $product->id,
+                'name' => $product->nama_barang,
+                'base_price' => $pricing['base_unit_price'],
+                'unit_price' => $pricing['unit_price'],
+                'base_total_price' => $pricing['base_total_price'],
+                'total_price' => $pricing['total_price'],
+                'quantity' => $item->quantity,
+                'max_stock' => $product->stok,
+                'image' => $product->gambar,
+                'discount_percentage' => $pricing['discount_percentage'],
+                'total_discount' => $pricing['total_discount'],
+            ];
+
+            $summary['subtotal'] += $pricing['base_total_price'];
+            $summary['discount'] += $pricing['total_discount'];
+            $summary['total'] += $pricing['total_price'];
+        }
+
+        return view('cart.checkout', [
+            'items' => $items,
+            'summary' => [
+                'subtotal' => round($summary['subtotal'], 2),
+                'discount' => round($summary['discount'], 2),
+                'total' => round($summary['total'], 2),
+            ],
+        ]);
     }
 
     /**
@@ -121,49 +174,154 @@ class CartController extends Controller
             'items' => ['required', 'array'],
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.price' => ['required', 'numeric', 'min:0'],
             'payment_method' => ['required', 'string', 'in:cash,transfer,ewallet,qris'],
             'voucher_code' => ['nullable', 'string'],
         ]);
 
-        // Validate stock availability
-        foreach ($data['items'] as $itemData) {
-            $product = Product::findOrFail($itemData['product_id']);
-            if ($product->stok !== null && $product->stok < $itemData['quantity']) {
-                return back()->with('error', 'Stok produk '.$product->nama_barang.' tidak mencukupi.');
-            }
+        $itemsPayload = collect($data['items'])->map(function (array $item) {
+            return [
+                'product_id' => (int) $item['product_id'],
+                'quantity' => (int) $item['quantity'],
+            ];
+        })->values();
+
+        if ($itemsPayload->isEmpty()) {
+            return back()->with('error', 'Tidak ada produk yang diproses.');
         }
 
-        DB::transaction(function () use ($data) {
-            $invoiceNumber = 'INV-'.now()->format('Ymd').'-'.Str::upper(Str::random(5));
+        $itemDetails = [];
+        $orderSubtotal = 0.0;
+        $orderDiscount = 0.0;
+        $orderTotal = 0.0;
 
-            foreach ($data['items'] as $itemData) {
-                $product = Product::findOrFail($itemData['product_id']);
-                
-                $unitPrice = $itemData['price'];
-                $quantity = $itemData['quantity'];
-                $total = $unitPrice * $quantity;
+        foreach ($itemsPayload as $itemData) {
+            $product = Product::findOrFail($itemData['product_id']);
+            $quantity = $itemData['quantity'];
 
-                Sale::create([
+            if ($product->stok !== null && $product->stok < $quantity) {
+                return back()->with('error', 'Stok produk '.$product->nama_barang.' tidak mencukupi.');
+            }
+
+            $pricing = $product->discountSummary($quantity);
+
+            $itemDetails[] = [
+                'product' => $product,
+                'quantity' => $quantity,
+                'base_unit_price' => $pricing['base_unit_price'],
+                'unit_price' => $pricing['unit_price'],
+                'base_total_price' => $pricing['base_total_price'],
+                'total_price' => $pricing['total_price'],
+                'automatic_discount' => $pricing['total_discount'],
+                'total_discount' => $pricing['total_discount'],
+            ];
+
+            $orderSubtotal += $pricing['base_total_price'];
+            $orderDiscount += $pricing['total_discount'];
+            $orderTotal += $pricing['total_price'];
+        }
+
+        $couponCode = strtoupper(trim((string) ($data['voucher_code'] ?? '')));
+        $coupon = null;
+        $couponDiscountTotal = 0.0;
+
+        if ($couponCode !== '') {
+            $coupon = Coupon::whereRaw('UPPER(code) = ?', [$couponCode])->first();
+
+            if (! $coupon) {
+                return back()->with('error', 'Kode voucher tidak ditemukan.');
+            }
+
+            if ($coupon->discount && $coupon->discount->applies_automatically) {
+                return back()->with('error', 'Kode voucher ini tidak diperlukan karena diskon tersebut sudah diterapkan otomatis.');
+            }
+
+            if (! $coupon->canBeUsedBy(Auth::user(), $orderTotal)) {
+                return back()->with('error', 'Kode voucher tidak dapat digunakan untuk transaksi ini.');
+            }
+
+            foreach ($itemDetails as &$detail) {
+                $rule = DiscountRule::resolveForProduct(
+                    $detail['product'],
+                    $detail['quantity'],
+                    [
+                        'only_automatic' => false,
+                        'discount_id' => $coupon->discount_id,
+                    ]
+                );
+
+                if (! $rule) {
+                    continue;
+                }
+
+                $pricing = $rule->buildPricing($detail['unit_price'], $detail['quantity']);
+
+                if ($pricing['total_discount'] <= 0) {
+                    continue;
+                }
+
+                $detail['unit_price'] = $pricing['unit_price'];
+                $detail['total_price'] = $pricing['total_price'];
+                $detail['total_discount'] += $pricing['total_discount'];
+                $detail['coupon_discount'] = $pricing['total_discount'];
+
+                $couponDiscountTotal += $pricing['total_discount'];
+            }
+            unset($detail);
+
+            if ($couponDiscountTotal <= 0) {
+                return back()->with('error', 'Kode voucher tidak berlaku untuk produk di keranjang Anda.');
+            }
+
+            $orderDiscount += $couponDiscountTotal;
+            $orderTotal = max(0, $orderTotal - $couponDiscountTotal);
+        }
+
+        $invoiceNumber = 'INV-'.now()->format('Ymd').'-'.Str::upper(Str::random(5));
+
+        $sales = [];
+
+        DB::transaction(function () use ($itemDetails, $invoiceNumber, &$sales, $coupon, $couponDiscountTotal) {
+            foreach ($itemDetails as $detail) {
+                /** @var Product $product */
+                $product = $detail['product'];
+                $quantity = $detail['quantity'];
+
+                $sale = Sale::create([
                     'invoice_number' => $invoiceNumber,
                     'user_id' => Auth::id(),
                     'product_id' => $product->id,
                     'quantity' => $quantity,
-                    'unit_price' => $unitPrice,
-                    'total_price' => $total,
+                    'unit_price' => $detail['unit_price'],
+                    'total_price' => $detail['total_price'],
                     'sale_date' => now(),
                 ]);
+
+                $sales[] = $sale;
 
                 if ($product->stok !== null) {
                     $product->decrement('stok', $quantity);
                 }
             }
 
-            // Clear cart after successful checkout
+            if ($coupon && $couponDiscountTotal > 0) {
+                CouponUsage::create([
+                    'coupon_id' => $coupon->id,
+                    'customer_id' => Auth::id(),
+                    'sale_id' => $sales[0]->id ?? null,
+                    'used_at' => now(),
+                ]);
+            }
+
             Cart::where('user_id', Auth::id())->delete();
         });
 
-        return redirect()->route('customer.transactions.index')->with('success', 'Pembayaran berhasil! Terima kasih telah berbelanja.');
+        $message = 'Pembayaran berhasil! Terima kasih telah berbelanja.';
+
+        if ($orderDiscount > 0) {
+            $message .= ' Anda menghemat Rp '.number_format($orderDiscount, 0, ',', '.').'.';
+        }
+
+        return redirect()->route('customer.transactions.index')->with('success', $message);
     }
 
     /**
@@ -182,16 +340,29 @@ class CartController extends Controller
             return back()->with('error', 'Stok produk '.$product->nama_barang.' tidak mencukupi.');
         }
 
+        $pricing = $product->discountSummary($data['quantity']);
+
         $items = [[
             'id' => $product->id,
             'name' => $product->nama_barang,
-            'price' => $product->harga,
+            'base_price' => $pricing['base_unit_price'],
+            'unit_price' => $pricing['unit_price'],
+            'base_total_price' => $pricing['base_total_price'],
+            'total_price' => $pricing['total_price'],
             'quantity' => $data['quantity'],
             'max_stock' => $product->stok,
             'image' => $product->gambar,
+            'discount_percentage' => $pricing['discount_percentage'],
+            'total_discount' => $pricing['total_discount'],
         ]];
 
-        return view('cart.checkout', compact('items'));
+        $summary = [
+            'subtotal' => round($pricing['base_total_price'], 2),
+            'discount' => round($pricing['total_discount'], 2),
+            'total' => round($pricing['total_price'], 2),
+        ];
+
+        return view('cart.checkout', compact('items', 'summary'));
     }
 
     private function authorizeCart(Cart $cart): void

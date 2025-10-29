@@ -233,6 +233,180 @@
                             <img id="preview" src="" alt="Preview" class="max-w-xs rounded-lg shadow-md">
                         </div>
                     </div>
+
+                    <!-- Divider -->
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                            Diskon Produk (Opsional)
+                        </h3>
+                        <p class="text-sm text-gray-600 mb-4">Tambahkan diskon untuk produk ini. Diskon akan otomatis diterapkan saat pelanggan membeli produk.</p>
+                    </div>
+
+                    @php
+                        // Get existing product discount if exists
+                        $existingDiscount = $product->activeDiscountRules()->with('discount')->first();
+                        $hasDiscount = $existingDiscount !== null;
+                    @endphp
+
+                    <!-- Enable Discount Toggle -->
+                    <div class="flex items-center">
+                        <input 
+                            type="checkbox" 
+                            id="enable_discount" 
+                            name="enable_discount"
+                            value="1"
+                            {{ old('enable_discount', $hasDiscount ? '1' : '') ? 'checked' : '' }}
+                            class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                            onchange="toggleDiscountFields()"
+                        >
+                        <label for="enable_discount" class="ml-2 text-sm font-semibold text-gray-700">
+                            Aktifkan Diskon untuk Produk Ini
+                        </label>
+                    </div>
+
+                    <!-- Discount Fields -->
+                    <div id="discountFields" class="space-y-6 {{ old('enable_discount', $hasDiscount ? '1' : '') ? '' : 'hidden' }}">
+                        <!-- Nama Diskon -->
+                        <div>
+                            <label for="discount_name" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Nama Diskon
+                            </label>
+                            <input 
+                                type="text" 
+                                name="discount_name" 
+                                id="discount_name" 
+                                value="{{ old('discount_name', $existingDiscount?->discount->name) }}" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200"
+                                placeholder="Contoh: Diskon Spesial Produk"
+                            >
+                        </div>
+
+                        <!-- Tipe dan Nilai Diskon -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Tipe Diskon -->
+                            <div>
+                                <label for="discount_type" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Tipe Diskon
+                                </label>
+                                <select 
+                                    name="discount_type" 
+                                    id="discount_type" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200"
+                                    onchange="updateDiscountPlaceholder()"
+                                >
+                                    <option value="percentage" {{ old('discount_type', $existingDiscount?->discount_type) == 'percentage' ? 'selected' : '' }}>Persentase (%)</option>
+                                    <option value="fixed" {{ old('discount_type', $existingDiscount?->discount_type) == 'fixed' ? 'selected' : '' }}>Nominal Tetap (Rp)</option>
+                                </select>
+                            </div>
+
+                            <!-- Nilai Diskon -->
+                            <div>
+                                <label for="discount_value" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Nilai Diskon
+                                </label>
+                                <div class="relative">
+                                    <span id="discount_prefix" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold"></span>
+                                    <input 
+                                        type="number" 
+                                        name="discount_value" 
+                                        id="discount_value" 
+                                        value="{{ old('discount_value', $existingDiscount?->discount_value) }}" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200"
+                                        placeholder="0"
+                                        min="0"
+                                        step="0.01"
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Min Quantity dan Priority -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Minimum Quantity -->
+                            <div>
+                                <label for="min_quantity" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Jumlah Minimum Pembelian
+                                </label>
+                                <input 
+                                    type="number" 
+                                    name="min_quantity" 
+                                    id="min_quantity" 
+                                    value="{{ old('min_quantity', $existingDiscount?->min_quantity ?? 1) }}" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200"
+                                    placeholder="1"
+                                    min="1"
+                                >
+                                <p class="mt-1 text-xs text-gray-500">Diskon berlaku jika pembelian minimal sejumlah ini</p>
+                            </div>
+
+                            <!-- Priority -->
+                            <div>
+                                <label for="priority" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Prioritas
+                                </label>
+                                <input 
+                                    type="number" 
+                                    name="priority" 
+                                    id="priority" 
+                                    value="{{ old('priority', $existingDiscount?->priority ?? 0) }}" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200"
+                                    placeholder="0"
+                                    min="0"
+                                >
+                                <p class="mt-1 text-xs text-gray-500">Semakin tinggi angka, semakin tinggi prioritas</p>
+                            </div>
+                        </div>
+
+                        <!-- Tanggal Mulai dan Selesai -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Tanggal Mulai -->
+                            <div>
+                                <label for="starts_at" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Tanggal Mulai
+                                </label>
+                                <input 
+                                    type="datetime-local" 
+                                    name="starts_at" 
+                                    id="starts_at" 
+                                    value="{{ old('starts_at', $existingDiscount?->discount->starts_at?->format('Y-m-d\TH:i')) }}" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200"
+                                >
+                                <p class="mt-1 text-xs text-gray-500">Kosongkan jika ingin langsung aktif</p>
+                            </div>
+
+                            <!-- Tanggal Selesai -->
+                            <div>
+                                <label for="ends_at" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Tanggal Selesai
+                                </label>
+                                <input 
+                                    type="datetime-local" 
+                                    name="ends_at" 
+                                    id="ends_at" 
+                                    value="{{ old('ends_at', $existingDiscount?->discount->ends_at?->format('Y-m-d\TH:i')) }}" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200"
+                                >
+                                <p class="mt-1 text-xs text-gray-500">Kosongkan jika tidak ada batas waktu</p>
+                            </div>
+                        </div>
+
+                        <!-- Deskripsi Diskon -->
+                        <div>
+                            <label for="discount_description" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Deskripsi Diskon
+                            </label>
+                            <textarea 
+                                name="discount_description" 
+                                id="discount_description" 
+                                rows="3"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200"
+                                placeholder="Deskripsi opsional tentang diskon ini"
+                            >{{ old('discount_description', $existingDiscount?->discount->description) }}</textarea>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Action Buttons -->
@@ -304,12 +478,46 @@
         });
     }
 
+    function toggleDiscountFields() {
+        const checkbox = document.getElementById('enable_discount');
+        const fields = document.getElementById('discountFields');
+        
+        if (checkbox.checked) {
+            fields.classList.remove('hidden');
+        } else {
+            fields.classList.add('hidden');
+        }
+    }
+
+    function updateDiscountPlaceholder() {
+        const type = document.getElementById('discount_type').value;
+        const prefix = document.getElementById('discount_prefix');
+        const input = document.getElementById('discount_value');
+        
+        if (type === 'percentage') {
+            prefix.textContent = '';
+            input.placeholder = '0-100';
+            input.max = '100';
+            input.classList.remove('pl-12');
+            input.classList.add('px-4');
+        } else {
+            prefix.textContent = 'Rp';
+            input.placeholder = '0';
+            input.removeAttribute('max');
+            input.classList.remove('px-4');
+            input.classList.add('pl-12');
+        }
+    }
+
     // Initialize subcategory filter on page load
     document.addEventListener('DOMContentLoaded', function() {
         const categorySelect = document.getElementById('category_id');
         if (categorySelect.value) {
             loadSubcategories(categorySelect.value);
         }
+        
+        // Initialize discount placeholder
+        updateDiscountPlaceholder();
     });
 </script>
 @endsection

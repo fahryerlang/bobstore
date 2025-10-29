@@ -4,6 +4,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\DiscountController;
+use App\Http\Controllers\Admin\DiscountRuleController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\SalesReportController;
 use App\Http\Controllers\Admin\UserController;
@@ -57,6 +60,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 
     // CRUD USERS (Kelola Pengguna)
     Route::resource('users', UserController::class);
+
+    // Discount & Promotion Management
+    Route::resource('discounts', DiscountController::class);
+
+    Route::post('discounts/{discount}/rules', [DiscountRuleController::class, 'store'])->name('discounts.rules.store');
+    Route::put('discount-rules/{discountRule}', [DiscountRuleController::class, 'update'])->name('discount-rules.update');
+    Route::delete('discount-rules/{discountRule}', [DiscountRuleController::class, 'destroy'])->name('discount-rules.destroy');
+
+    Route::post('discounts/{discount}/coupons', [CouponController::class, 'store'])->name('discounts.coupons.store');
+    Route::put('coupons/{coupon}', [CouponController::class, 'update'])->name('coupons.update');
+    Route::delete('coupons/{coupon}', [CouponController::class, 'destroy'])->name('coupons.destroy');
 
 });
 

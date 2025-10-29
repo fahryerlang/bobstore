@@ -23,12 +23,57 @@
                             </svg>
                         </div>
                     @endif
+                    
+                    @php
+                        $showPricing = $product->discountSummary();
+                    @endphp
+                    
+                    <!-- Discount Badge on Image -->
+                    @if ($showPricing['applies'])
+                        <div class="absolute top-4 left-4">
+                            <div class="bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-3 rounded-xl shadow-2xl transform hover:scale-105 transition">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span class="font-bold text-2xl">{{ number_format($showPricing['discount_percentage'], 0) }}%</span>
+                                </div>
+                                <span class="text-xs font-bold block text-center uppercase tracking-widest">Diskon Spesial</span>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">{{ $product->nama_barang }}</h1>
-                <div class="mt-4 text-3xl font-extrabold text-[#F87B1B]">Rp {{ number_format($product->harga, 0, ',', '.') }}</div>
+                @php
+                    $pricing = $product->discountSummary();
+                @endphp
+                @if ($pricing['applies'])
+                    <div class="mt-4 bg-gradient-to-r from-orange-50 to-red-50 p-4 rounded-xl border-2 border-orange-200">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-sm font-bold text-red-600 uppercase tracking-wide">Harga Spesial dengan Diskon!</span>
+                        </div>
+                        <div class="flex items-baseline gap-3 flex-wrap">
+                            <span class="text-4xl font-extrabold text-[#F87B1B]">Rp {{ number_format($pricing['unit_price'], 0, ',', '.') }}</span>
+                            <div class="flex flex-col">
+                                <span class="text-sm text-gray-500 line-through">Rp {{ number_format($pricing['base_unit_price'], 0, ',', '.') }}</span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-500 text-white text-xs font-bold shadow-md">
+                                    HEMAT {{ number_format($pricing['discount_percentage'], 0) }}%
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600">
+                            💰 Anda menghemat <span class="font-bold text-green-600">Rp {{ number_format($pricing['unit_discount'], 0, ',', '.') }}</span> per item!
+                        </div>
+                    </div>
+                @else
+                    <div class="mt-4 text-3xl font-extrabold text-[#F87B1B]">Rp {{ number_format($product->harga, 0, ',', '.') }}</div>
+                @endif
 
                 <div class="mt-6 space-y-4">
                     <div class="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-200">

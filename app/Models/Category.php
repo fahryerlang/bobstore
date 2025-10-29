@@ -57,6 +57,14 @@ class Category extends Model
     }
 
     /**
+     * Discount rules scoped to this category.
+     */
+    public function discountRules(): HasMany
+    {
+        return $this->hasMany(DiscountRule::class);
+    }
+
+    /**
      * Scope for active categories only
      */
     public function scopeActive($query)
