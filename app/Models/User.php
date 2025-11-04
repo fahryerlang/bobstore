@@ -18,11 +18,14 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-    'email',
-    'password',
-    'role', // <-- TAMBAHKAN INI
-    'phone',
-    'address',
+        'email',
+        'password',
+        'role',
+        'phone',
+        'address',
+        'points',
+        'member_level',
+        'member_since',
     ];
 
     /**
@@ -45,6 +48,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'member_since' => 'datetime',
         ];
     }
 
@@ -54,5 +58,78 @@ class User extends Authenticatable
     public function sales()
     {
         return $this->hasMany(Sale::class, 'user_id');
+    }
+
+    /**
+     * Get the wallet for the user.
+     */
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    /**
+     * Get wallet transactions for the user.
+     */
+    public function walletTransactions()
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
+
+    /**
+     * Get or create wallet for user
+     */
+    public function getOrCreateWallet()
+    {
+        return $this->wallet()->firstOrCreate([
+            'user_id' => $this->id
+        ], [
+            'balance' => 0,
+            'total_topup' => 0,
+            'total_spent' => 0,
+            'is_active' => true,
+        ]);
+    }
+
+    /**
+     * Get point transactions for the user.
+     */
+    public function pointTransactions()
+    {
+        return $this->hasMany(\App\Models\PointTransaction::class);
+    }
+
+    /**
+     * Check if user is a member (customer)
+     */
+    public function isMember(): bool
+    {
+        return $this->role === 'customer';
+    }
+
+    /**
+     * Get member level badge color
+     */
+    public function getMemberLevelColorAttribute(): string
+    {
+        return match($this->member_level) {
+            'platinum' => 'text-purple-600 bg-purple-100',
+            'gold' => 'text-yellow-600 bg-yellow-100',
+            'silver' => 'text-gray-600 bg-gray-100',
+            default => 'text-orange-600 bg-orange-100',
+        };
+    }
+
+    /**
+     * Get member level icon
+     */
+    public function getMemberLevelIconAttribute(): string
+    {
+        return match($this->member_level) {
+            'platinum' => '💎',
+            'gold' => '⭐',
+            'silver' => '🥈',
+            default => '🥉',
+        };
     }
 }

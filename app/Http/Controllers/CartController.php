@@ -8,6 +8,7 @@ use App\Models\CouponUsage;
 use App\Models\DiscountRule;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Services\WalletService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,7 +40,7 @@ class CartController extends Controller
                 return;
             }
 
-            $pricing = $product->discountSummary($item->quantity);
+            $pricing = $product->getDiscountDisplayInfo($item->quantity);
 
             $item->pricing_summary = $pricing;
 
@@ -134,7 +135,7 @@ class CartController extends Controller
                 continue;
             }
 
-            $pricing = $product->discountSummary($item->quantity);
+            $pricing = $product->getDiscountDisplayInfo($item->quantity);
 
             $items[] = [
                 'id' => $product->id,
@@ -174,7 +175,7 @@ class CartController extends Controller
             'items' => ['required', 'array'],
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'payment_method' => ['required', 'string', 'in:cash,transfer,ewallet,qris'],
+            'payment_method' => ['required', 'string', 'in:cash,transfer,ewallet,qris,wallet'],
             'voucher_code' => ['nullable', 'string'],
         ]);
 
@@ -202,7 +203,7 @@ class CartController extends Controller
                 return back()->with('error', 'Stok produk '.$product->nama_barang.' tidak mencukupi.');
             }
 
-            $pricing = $product->discountSummary($quantity);
+            $pricing = $product->getDiscountDisplayInfo($quantity);
 
             $itemDetails[] = [
                 'product' => $product,
@@ -276,11 +277,24 @@ class CartController extends Controller
             $orderTotal = max(0, $orderTotal - $couponDiscountTotal);
         }
 
+        // Check wallet balance if using wallet payment
+        $paymentMethod = $data['payment_method'];
+        if ($paymentMethod === 'wallet') {
+            $walletService = app(WalletService::class);
+            $user = Auth::user();
+            
+            if (!$walletService->hasSufficientBalance($user, $orderTotal)) {
+                $currentBalance = $walletService->getBalance($user);
+                $shortfall = $orderTotal - $currentBalance;
+                return back()->with('error', 'Saldo tidak mencukupi. Saldo Anda: Rp ' . number_format($currentBalance, 0, ',', '.') . '. Kurang: Rp ' . number_format($shortfall, 0, ',', '.'));
+            }
+        }
+
         $invoiceNumber = 'INV-'.now()->format('Ymd').'-'.Str::upper(Str::random(5));
 
         $sales = [];
 
-        DB::transaction(function () use ($itemDetails, $invoiceNumber, &$sales, $coupon, $couponDiscountTotal) {
+        DB::transaction(function () use ($itemDetails, $invoiceNumber, &$sales, $coupon, $couponDiscountTotal, $paymentMethod, $orderTotal) {
             foreach ($itemDetails as $detail) {
                 /** @var Product $product */
                 $product = $detail['product'];
@@ -312,6 +326,19 @@ class CartController extends Controller
                 ]);
             }
 
+            // Deduct wallet balance if using wallet payment
+            if ($paymentMethod === 'wallet') {
+                $walletService = app(WalletService::class);
+                $walletService->deduct(
+                    Auth::user(),
+                    $orderTotal,
+                    Sale::class,
+                    $sales[0]->id ?? null,
+                    'Pembayaran pesanan ' . $invoiceNumber,
+                    ['invoice_number' => $invoiceNumber, 'items_count' => count($sales)]
+                );
+            }
+
             Cart::where('user_id', Auth::id())->delete();
         });
 
@@ -340,7 +367,7 @@ class CartController extends Controller
             return back()->with('error', 'Stok produk '.$product->nama_barang.' tidak mencukupi.');
         }
 
-        $pricing = $product->discountSummary($data['quantity']);
+        $pricing = $product->getDiscountDisplayInfo($data['quantity']);
 
         $items = [[
             'id' => $product->id,

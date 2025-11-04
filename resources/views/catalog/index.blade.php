@@ -235,10 +235,20 @@
             @forelse ($products as $product)
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition overflow-hidden flex flex-col group">
                     <a href="{{ route('catalog.show', $product) }}" class="relative overflow-hidden bg-gray-100 aspect-[4/3] block">
-                        @if ($product->gambar)
-                            <img src="{{ \Illuminate\Support\Facades\Storage::url($product->gambar) }}" alt="{{ $product->nama_barang }}" class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" loading="lazy">
+                        @if ($product->image_url)
+                            <img src="{{ $product->image_url }}" alt="{{ $product->nama_barang }}" class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" loading="lazy">
                         @else
                             <div class="absolute inset-0 flex items-center justify-center text-sm text-gray-500">Gambar belum tersedia</div>
+                        @endif
+                        
+                        <!-- Multiple Images Indicator -->
+                        @if (!empty($product->images) && count($product->images) > 0)
+                            <div class="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 z-[5]">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                                </svg>
+                                +{{ count($product->images) }}
+                            </div>
                         @endif
                         
                         @php
@@ -324,7 +334,7 @@
 
                         <div class="mt-auto pt-2">
                             @auth
-                                @if (in_array(auth()->user()->role, ['admin', 'pembeli']))
+                                @if (in_array(auth()->user()->role, ['admin', 'pembeli', 'customer']))
                                     <form method="POST" action="{{ route('cart.store') }}" class="space-y-2">
                                         @csrf
                                         <input type="hidden" name="product_id" value="{{ $product->id }}">

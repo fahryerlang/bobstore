@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleTransaction;
 use App\Models\User;
+use App\Services\LoyaltyPointService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,12 +24,19 @@ class TransactionController extends Controller
      */
     public function index(Request $request): View
     {
+        // Get members (customers) with their points
         $customers = User::query()
-            ->where('role', 'pembeli')
+            ->where('role', 'customer')
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'points', 'member_level']);
 
-        return view('kasir.transactions.index', compact('customers'));
+        // Get products with stock for catalog display
+        $products = Product::query()
+            ->where('stok', '>', 0)
+            ->orderBy('nama_barang')
+            ->get();
+
+        return view('kasir.transactions.index', compact('customers', 'products'));
     }
 
     /**
@@ -48,7 +56,8 @@ class TransactionController extends Controller
             ->where('stok', '>', 0) // Only show products with stock available
             ->when($query !== '', function ($builder) use ($query) {
                 $builder->where(function ($sub) use ($query) {
-                    $sub->where('nama_barang', 'like', "%{$query}%");
+                    $sub->where('nama_barang', 'like', "%{$query}%")
+                        ->orWhere('barcode', $query); // Search by exact barcode match
 
                     if (is_numeric($query)) {
                         $sub->orWhere('id', (int) $query);
@@ -58,7 +67,7 @@ class TransactionController extends Controller
             ->orderByDesc('stok')
             ->orderBy('nama_barang')
             ->limit(20) // Increased limit to show more products
-            ->get(['id', 'nama_barang', 'harga', 'stok', 'gambar']);
+            ->get(['id', 'nama_barang', 'harga', 'stok', 'gambar', 'barcode']);
 
         return response()->json(
             $products->map(fn ($product) => [
@@ -67,6 +76,8 @@ class TransactionController extends Controller
                 'harga' => (float) $product->harga,
                 'stok' => (int) $product->stok,
                 'gambar' => $product->gambar,
+                'image_url' => $product->image_url,
+                'barcode' => $product->barcode,
             ])
         );
     }
@@ -74,20 +85,27 @@ class TransactionController extends Controller
     /**
      * Store a completed cashier transaction.
      */
-    public function store(StoreSaleRequest $request): RedirectResponse
+    public function store(StoreSaleRequest $request, LoyaltyPointService $loyaltyService): RedirectResponse
     {
         $customerId = $request->input('customer_id');
         $itemsInput = $request->input('items', []);
         $discount = (float) $request->input('discount', 0);
+        $pointsToRedeem = (int) $request->input('points_to_redeem', 0);
         $amountPaid = (float) $request->input('amount_paid');
         $cashier = $request->user();
+        
+        // Get customer if exists
+        $customer = $customerId ? User::find($customerId) : null;
 
         $transaction = DB::transaction(function () use (
             $itemsInput,
             $customerId,
+            $customer,
             $discount,
+            $pointsToRedeem,
             $amountPaid,
-            $cashier
+            $cashier,
+            $loyaltyService
         ) {
             $now = now();
             $invoiceNumber = $this->generateInvoiceNumber();
@@ -133,13 +151,29 @@ class TransactionController extends Controller
                 $subtotal += $lineTotal;
             }
 
-            if ($discount > $subtotal) {
+            // Handle point redemption for members
+            $pointsDiscount = 0;
+            if ($customer && $customer->isMember() && $pointsToRedeem > 0) {
+                $redemptionResult = $loyaltyService->redeemPoints($customer, $pointsToRedeem);
+                
+                if (!$redemptionResult['success']) {
+                    throw ValidationException::withMessages([
+                        'points_to_redeem' => [$redemptionResult['message']],
+                    ]);
+                }
+                
+                $pointsDiscount = $redemptionResult['discount_amount'];
+            }
+
+            $totalDiscount = $discount + $pointsDiscount;
+            
+            if ($totalDiscount > $subtotal) {
                 throw ValidationException::withMessages([
-                    'discount' => ['Diskon melebihi subtotal.'],
+                    'discount' => ['Total diskon melebihi subtotal.'],
                 ]);
             }
 
-            $total = max($subtotal - $discount, 0);
+            $total = max($subtotal - $totalDiscount, 0);
 
             if ($amountPaid < $total) {
                 throw ValidationException::withMessages([
@@ -154,7 +188,7 @@ class TransactionController extends Controller
                 'cashier_id' => $cashier->id,
                 'customer_id' => $customerId ?: null,
                 'subtotal' => $subtotal,
-                'discount' => $discount,
+                'discount' => $totalDiscount,
                 'total' => $total,
                 'amount_paid' => $amountPaid,
                 'change_due' => $changeDue,
@@ -179,6 +213,11 @@ class TransactionController extends Controller
                 ]);
             }
 
+            // Award loyalty points to member (if applicable)
+            if ($customer && $customer->isMember() && $total > 0) {
+                $loyaltyService->awardPoints($customer, Sale::where('invoice_number', $invoiceNumber)->first(), $total);
+            }
+
             return $transaction;
         });
 
@@ -195,6 +234,40 @@ class TransactionController extends Controller
         $transaction->load(['cashier', 'customer', 'items.product']);
 
         return view('kasir.transactions.show', compact('transaction'));
+    }
+
+    /**
+     * Get member points info (AJAX)
+     */
+    public function getMemberPoints(Request $request, LoyaltyPointService $loyaltyService): JsonResponse
+    {
+        $customerId = $request->input('customer_id');
+        
+        if (!$customerId) {
+            return response()->json([
+                'is_member' => false,
+            ]);
+        }
+        
+        $customer = User::find($customerId);
+        
+        if (!$customer || !$customer->isMember()) {
+            return response()->json([
+                'is_member' => false,
+            ]);
+        }
+        
+        $levelInfo = $loyaltyService->getMemberLevelInfo($customer);
+        
+        return response()->json([
+            'is_member' => true,
+            'points' => $customer->points,
+            'member_level' => $customer->member_level,
+            'member_level_icon' => $customer->member_level_icon,
+            'member_level_color' => $customer->member_level_color,
+            'level_info' => $levelInfo,
+            'points_per_rupiah' => LoyaltyPointService::RUPIAH_PER_POINT,
+        ]);
     }
 
     /**

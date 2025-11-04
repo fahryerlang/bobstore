@@ -34,8 +34,8 @@
                         @forelse ($products as $product)
                             <tr class="hover:bg-orange-50/60 transition">
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @if ($product->gambar)
-                                        <img src="{{ Storage::url($product->gambar) }}" alt="{{ $product->nama_barang }}" class="w-16 h-16 object-cover rounded-lg shadow-md">
+                                    @if ($product->image_url)
+                                        <img src="{{ $product->image_url }}" alt="{{ $product->nama_barang }}" class="w-16 h-16 object-cover rounded-lg shadow-md">
                                     @else
                                         <div class="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center">
                                             <svg class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

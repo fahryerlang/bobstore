@@ -36,15 +36,24 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'in:admin,kasir,pembeli'],
+            'role' => ['required', 'in:admin,kasir,customer,pembeli'],
         ]);
 
-        User::create([
+        $userData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
-        ]);
+        ];
+
+        // Jika role adalah customer (member), inisialisasi member fields
+        if ($validated['role'] === 'customer') {
+            $userData['points'] = 0;
+            $userData['member_level'] = 'bronze';
+            $userData['member_since'] = now();
+        }
+
+        User::create($userData);
 
         return redirect()->route('users.index')->with('success', 'Pengguna berhasil ditambahkan!');
     }
@@ -70,16 +79,34 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
+        // Validasi dasar
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => ['required', 'in:admin,kasir,pembeli'],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-        ]);
+            'role' => ['required', 'in:admin,kasir,customer,pembeli'],
+        ];
+
+        // Tambahkan validasi password hanya jika field password diisi
+        if ($request->filled('password')) {
+            $rules['password'] = ['required', 'string', 'min:8', 'confirmed'];
+        }
+
+        $validated = $request->validate($rules);
+
+        $oldRole = $user->role;
+        $newRole = $validated['role'];
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
-        $user->role = $validated['role'];
+        $user->role = $newRole;
+
+        // Jika mengubah dari non-member menjadi customer (member)
+        if ($oldRole !== 'customer' && $newRole === 'customer') {
+            // Inisialisasi member fields
+            $user->points = 0;
+            $user->member_level = 'bronze';
+            $user->member_since = now();
+        }
 
         // Only update password if provided
         if ($request->filled('password')) {
@@ -88,7 +115,16 @@ class UserController extends Controller
 
         $user->save();
 
-        return redirect()->route('users.index')->with('success', 'Data pengguna berhasil diperbarui!');
+        $message = 'Data pengguna berhasil diperbarui!';
+        
+        // Tambahkan notifikasi khusus jika dikonversi jadi member
+        if ($oldRole !== 'customer' && $newRole === 'customer') {
+            $message = 'Pengguna berhasil dikonversi menjadi Member dengan status Bronze! Poin loyalty telah diaktifkan.';
+        } elseif ($oldRole === 'customer' && $newRole !== 'customer') {
+            $message = 'Role pengguna berhasil diubah. Poin loyalty tidak akan bisa digunakan lagi.';
+        }
+
+        return redirect()->route('users.index')->with('success', $message);
     }
 
     /**

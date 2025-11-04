@@ -13,25 +13,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     </head>
-    <body class="bg-white text-gray-900 font-sans antialiased" x-data="layoutState()" x-on:notify.window="showFlash($event.detail)">
-        <div x-cloak x-show="flash.visible" x-transition.opacity.duration.200ms class="fixed top-4 right-4 z-[60] max-w-sm w-full">
-            <div class="rounded-xl border border-orange-200 bg-white shadow-lg ring-1 ring-orange-100/60 p-4 flex items-start gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-[#F87B1B]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm font-semibold text-gray-900" x-text="flash.message"></p>
-                </div>
-                <button type="button" class="text-gray-400 hover:text-gray-600 transition" @click="flash.visible = false">
-                    <span class="sr-only">Tutup</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            </div>
-        </div>
+    <body class="bg-white text-gray-900 font-sans antialiased" x-data="layoutState()">
 
         <!-- Overlay Backdrop (untuk menutup sidebar saat klik di luar) -->
         <div x-cloak x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false" class="fixed inset-0 bg-black bg-opacity-50 z-30"></div>
@@ -149,6 +131,18 @@
                                     </svg>
                                     Kelola Produk
                                 </a>
+
+                                <a href="{{ route('admin.wallets.index') }}" @click="sidebarOpen = false" @class([
+                                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
+                                    'text-white bg-[#F87B1B] hover:opacity-90' => request()->routeIs('admin.wallets.*'),
+                                    'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !request()->routeIs('admin.wallets.*'),
+                                ])>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/>
+                                        <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Kelola Saldo
+                                </a>
                             @elseif (auth()->user()->role === 'kasir')
                                 <a href="{{ route('kasir.products.index') }}" @click="sidebarOpen = false" @class([
                                     'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
@@ -239,7 +233,7 @@
                                 @endif
                             </div>
 
-                            @if (auth()->user()->role === 'pembeli')
+                            @if (in_array(auth()->user()->role, ['pembeli', 'customer']))
                                 <a href="{{ route('customer.shop') }}" @click="sidebarOpen = false" @class([
                                     'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
                                     'text-white bg-[#F87B1B] hover:opacity-90' => $customerShopIsActive,
@@ -260,6 +254,18 @@
                                         <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
                                     </svg>
                                     Keranjang
+                                </a>
+
+                                <a href="{{ route('wallet.index') }}" @click="sidebarOpen = false" @class([
+                                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg',
+                                    'text-white bg-[#F87B1B] hover:opacity-90' => request()->routeIs('wallet.*'),
+                                    'text-[#F87B1B] border-2 border-[#F87B1B] hover:bg-[#F87B1B] hover:text-white' => !request()->routeIs('wallet.*'),
+                                ])>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/>
+                                        <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Saldo Saya
                                 </a>
 
                                 <a href="{{ route('customer.transactions.index') }}" @click="sidebarOpen = false" @class([
@@ -290,7 +296,7 @@
                 <!-- Info User di Bagian Bawah (hanya untuk yang sudah login) -->
                 @auth
                     <div class="mt-6 pt-6 border-t border-gray-200">
-                        <a href="{{ route('profile.edit') }}" @click="sidebarOpen = false" class="block rounded-xl bg-gradient-to-r from-[#F87B1B] to-orange-600 text-white p-4 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer">
+                        <a href="{{ route('profile.show') }}" @click="sidebarOpen = false" class="block rounded-xl bg-gradient-to-r from-[#F87B1B] to-orange-600 text-white p-4 shadow-md hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#F87B1B]" viewBox="0 0 20 20" fill="currentColor">
@@ -305,7 +311,11 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                             </svg>
-                                            {{ ucfirst(auth()->user()->role) }}
+                                            @if(auth()->user()->role === 'customer')
+                                                Member
+                                            @else
+                                                {{ ucfirst(auth()->user()->role) }}
+                                            @endif
                                         </span>
                                     </div>
                                 </div>
@@ -355,6 +365,9 @@
             </div>
         </main>
 
+        <!-- Notification Component -->
+        @include('components.notification')
+
         <footer :class="sidebarOpen ? 'ml-64' : 'ml-0'" class="border-t border-gray-200 bg-white shadow-inner transition-all duration-300">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-sm text-gray-500 text-center flex items-center justify-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#F87B1B]" viewBox="0 0 20 20" fill="currentColor">
@@ -368,27 +381,11 @@
             document.addEventListener('alpine:init', () => {
                 Alpine.data('layoutState', () => ({
                     sidebarOpen: false,
-                    flash: {
-                        visible: false,
-                        message: ''
-                    },
-                    flashTimeout: null,
                     init() {
                         // Tutup sidebar saat navigasi (untuk Livewire atau SPA)
                         window.addEventListener('popstate', () => {
                             this.sidebarOpen = false;
                         });
-                    },
-                    showFlash(message) {
-                        this.flash.message = message;
-                        this.flash.visible = true;
-                        if (this.flashTimeout) {
-                            clearTimeout(this.flashTimeout);
-                        }
-                        this.flashTimeout = setTimeout(() => {
-                            this.flash.visible = false;
-                            this.flashTimeout = null;
-                        }, 3500);
                     }
                 }));
             });

@@ -100,16 +100,31 @@
                             <option value="">Pilih Role</option>
                             <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="kasir" {{ old('role') == 'kasir' ? 'selected' : '' }}>Kasir</option>
-                            <option value="pembeli" {{ old('role') == 'pembeli' ? 'selected' : '' }}>Pembeli / Pelanggan</option>
+                            <option value="customer" {{ old('role') == 'customer' ? 'selected' : '' }}>Member / Pelanggan Terdaftar</option>
+                            <option value="pembeli" {{ old('role') == 'pembeli' ? 'selected' : '' }}>Pembeli Biasa</option>
                         </select>
                         @error('role')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
-                        <p class="mt-2 text-sm text-gray-500">
-                            <span class="font-semibold">Admin:</span> Akses penuh ke semua fitur<br>
-                            <span class="font-semibold">Kasir:</span> Akses kelola produk dan transaksi<br>
-                            <span class="font-semibold">Pembeli:</span> Akses belanja dan keranjang
-                        </p>
+                        <div class="mt-2 space-y-1 text-sm text-gray-600">
+                            <p><span class="font-semibold">🔐 Admin:</span> Akses penuh ke semua fitur sistem</p>
+                            <p><span class="font-semibold">💰 Kasir:</span> Akses kelola produk dan transaksi penjualan</p>
+                            <p><span class="font-semibold">⭐ Member:</span> Dapat loyalty poin setiap belanja & tukar poin untuk diskon</p>
+                            <p><span class="font-semibold">👤 Pembeli Biasa:</span> Akses belanja tanpa benefit poin loyalty</p>
+                        </div>
+                        
+                        <!-- Info box untuk member -->
+                        <div id="member-info" class="hidden mt-3 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-lg p-4">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-6 h-6 text-orange-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div>
+                                    <p class="font-semibold text-gray-800 mb-1">Member otomatis diaktifkan!</p>
+                                    <p class="text-sm text-gray-600">User akan langsung mendapat status <strong>Bronze</strong> dengan 0 poin. Poin akan bertambah setiap belanja (Rp 1.000 = 1 poin).</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Password -->
@@ -170,4 +185,20 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('role');
+    const memberInfo = document.getElementById('member-info');
+
+    roleSelect.addEventListener('change', function() {
+        // Tampilkan info jika memilih customer (member)
+        if (this.value === 'customer') {
+            memberInfo.classList.remove('hidden');
+        } else {
+            memberInfo.classList.add('hidden');
+        }
+    });
+});
+</script>
 @endsection

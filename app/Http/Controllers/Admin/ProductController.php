@@ -45,9 +45,14 @@ class ProductController extends Controller
         // 1. Validasi Input
         $request->validate([
             'nama_barang' => 'required|string|max:255',
+            'barcode' => 'nullable|string|max:50|unique:products,barcode',
             'harga' => 'required|numeric|min:0',
             'stok' => 'required|numeric|min:0',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB Max
+            'image_type' => 'required|in:upload,url',
+            'image_url' => 'nullable|required_if:image_type,url|url',
+            'additional_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'additional_image_urls.*' => 'nullable|url',
             'category_id' => 'nullable|exists:categories,id',
             'subcategory_id' => 'nullable|exists:subcategories,id',
             'tags' => 'nullable|array',
@@ -66,31 +71,58 @@ class ProductController extends Controller
 
         DB::beginTransaction();
         try {
-            $data = $request->only(['nama_barang', 'harga', 'stok', 'category_id', 'subcategory_id']);
+            $data = $request->only(['nama_barang', 'barcode', 'harga', 'stok', 'category_id', 'subcategory_id']);
+            $data['image_type'] = $request->input('image_type');
 
-            // 2. Handle Upload Gambar
-            if ($request->hasFile('gambar')) {
-                // Simpan gambar di 'storage/app/public/products'
-                // URL publiknya akan menjadi 'storage/products/namafile.jpg'
-                $path = $request->file('gambar')->store('products', 'public');
-                $data['gambar'] = $path; // Simpan path-nya ke data
+            // 2. Handle Main Image (Upload or URL)
+            if ($request->input('image_type') === 'url') {
+                // URL Mode
+                $data['gambar'] = $request->input('image_url');
+            } else {
+                // Upload Mode
+                if ($request->hasFile('gambar')) {
+                    $path = $request->file('gambar')->store('products', 'public');
+                    $data['gambar'] = $path;
+                }
             }
+
+            // 3. Handle Additional Images
+            $additionalImages = [];
             
-            // 3. Simpan ke Database
+            if ($request->input('image_type') === 'url') {
+                // URL Mode - Get additional URLs
+                if ($request->filled('additional_image_urls')) {
+                    $urls = array_filter($request->input('additional_image_urls'));
+                    $additionalImages = array_values($urls); // Remove empty values and reindex
+                }
+            } else {
+                // Upload Mode - Handle file uploads
+                if ($request->hasFile('additional_images')) {
+                    foreach ($request->file('additional_images') as $file) {
+                        $path = $file->store('products', 'public');
+                        $additionalImages[] = $path;
+                    }
+                }
+            }
+
+            // Store additional images array (max 5)
+            $data['images'] = array_slice($additionalImages, 0, 5);
+            
+            // 4. Simpan ke Database
             $product = Product::create($data);
             
-            // 4. Attach tags jika ada
+            // 5. Attach tags jika ada
             if ($request->has('tags')) {
                 $product->tags()->attach($request->tags);
             }
 
-            // 5. Handle Discount
+            // 6. Handle Discount
             if ($request->input('enable_discount') && $request->filled('discount_value')) {
                 $this->createProductDiscount($product, $request);
             }
 
             DB::commit();
-            return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan.');
+            return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan dengan ' . (count($additionalImages) > 0 ? (count($additionalImages) + 1) . ' gambar.' : '1 gambar.'));
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -120,6 +152,7 @@ class ProductController extends Controller
         // 1. Validasi Input
         $request->validate([
             'nama_barang' => 'required|string|max:255',
+            'barcode' => 'nullable|string|max:50|unique:products,barcode,' . $product->id,
             'harga' => 'required|numeric|min:0',
             'stok' => 'required|numeric|min:0',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -141,7 +174,7 @@ class ProductController extends Controller
 
         DB::beginTransaction();
         try {
-            $data = $request->only(['nama_barang', 'harga', 'stok', 'category_id', 'subcategory_id']);
+            $data = $request->only(['nama_barang', 'barcode', 'harga', 'stok', 'category_id', 'subcategory_id']);
 
             // 2. Handle Gambar Baru (Jika ada)
             if ($request->hasFile('gambar')) {

@@ -17,12 +17,24 @@ class Product extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'barcode',
         'nama_barang',
         'harga',
         'stok',
         'gambar',
+        'images',
+        'image_type',
         'category_id',
         'subcategory_id',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'images' => 'array',
     ];
 
     /**
@@ -47,6 +59,55 @@ class Product extends Model
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(ProductTag::class, 'product_tag', 'product_id', 'tag_id');
+    }
+
+    /**
+     * Get the primary image URL (handles both external URLs and local paths)
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->gambar) {
+            return null;
+        }
+
+        // Check if it's an external URL
+        if (filter_var($this->gambar, FILTER_VALIDATE_URL)) {
+            return $this->gambar;
+        }
+
+        // It's a local file path
+        return asset('storage/' . $this->gambar);
+    }
+
+    /**
+     * Get all image URLs (handles both single and multiple images)
+     */
+    public function getAllImageUrlsAttribute(): array
+    {
+        $urls = [];
+
+        // Handle image_type field
+        if ($this->image_type === 'multiple' && !empty($this->images)) {
+            foreach ($this->images as $image) {
+                if (filter_var($image, FILTER_VALIDATE_URL)) {
+                    $urls[] = $image;
+                } else {
+                    $urls[] = asset('storage/' . $image);
+                }
+            }
+        } elseif ($this->image_type === 'url' && !empty($this->images)) {
+            // Multiple URLs stored in images field
+            foreach ($this->images as $image) {
+                if (filter_var($image, FILTER_VALIDATE_URL)) {
+                    $urls[] = $image;
+                }
+            }
+        } elseif ($this->gambar) {
+            // Single image in gambar field
+            $urls[] = $this->image_url;
+        }
+
+        return array_filter($urls);
     }
 
     /**
@@ -82,42 +143,65 @@ class Product extends Model
     /**
      * Get discount info for display (best discount available)
      */
-    public function getDiscountDisplayInfo()
+    public function getDiscountDisplayInfo($quantity = 1)
     {
+        $basePrice = $this->harga;
+        $baseTotal = $basePrice * $quantity;
+
+        // Find applicable discount rule
         $rule = $this->activeDiscountRules()
             ->whereHas('discount', function ($query) {
                 $query->where('applies_automatically', true);
             })
+            ->where(function ($query) use ($quantity) {
+                $query->where('min_quantity', '<=', $quantity)
+                      ->orWhereNull('min_quantity');
+            })
             ->orderBy('discount_value', 'desc')
             ->first();
 
+        // No discount applicable
         if (!$rule) {
-            return null;
+            return [
+                'has_discount' => false,
+                'discount_percentage' => 0,
+                'base_unit_price' => $basePrice,
+                'unit_price' => $basePrice,
+                'base_total_price' => $baseTotal,
+                'total_price' => $baseTotal,
+                'total_discount' => 0,
+                'min_quantity' => 1,
+                'savings' => 0,
+            ];
         }
 
-        $minQty = $rule->min_quantity ?? 1;
+        // Calculate discount
         $type = $rule->discount_type;
         $value = $rule->discount_value;
-
-        // Calculate prices
-        $basePrice = $this->harga;
-        $discountedPrice = $basePrice;
+        $minQty = $rule->min_quantity ?? 1;
 
         if ($type === 'percentage') {
-            $discountedPrice = $basePrice * (1 - ($value / 100));
+            $discountPerUnit = $basePrice * ($value / 100);
             $percentage = $value;
         } else {
-            $discountedPrice = max(0, $basePrice - $value);
+            $discountPerUnit = $value;
             $percentage = ($value / $basePrice) * 100;
         }
 
+        $unitPrice = max(0, $basePrice - $discountPerUnit);
+        $totalPrice = $unitPrice * $quantity;
+        $totalDiscount = ($basePrice - $unitPrice) * $quantity;
+
         return [
             'has_discount' => true,
-            'percentage' => round($percentage, 0),
-            'base_price' => $basePrice,
-            'discounted_price' => round($discountedPrice, 0),
+            'discount_percentage' => round($percentage, 0),
+            'base_unit_price' => $basePrice,
+            'unit_price' => $unitPrice,
+            'base_total_price' => $baseTotal,
+            'total_price' => $totalPrice,
+            'total_discount' => $totalDiscount,
             'min_quantity' => $minQty,
-            'savings' => round($basePrice - $discountedPrice, 0),
+            'savings' => round($totalDiscount, 0),
         ];
     }
 }

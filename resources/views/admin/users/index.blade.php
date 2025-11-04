@@ -79,15 +79,23 @@
                                 <div class="text-sm text-gray-900">{{ $user->email }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
-                                    {{ $user->role === 'admin' ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' : '' }}
-                                    {{ $user->role === 'kasir' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' : '' }}
-                                    {{ $user->role === 'pembeli' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' : '' }}">
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                    </svg>
-                                    {{ ucfirst($user->role) }}
-                                </span>
+                                <div class="flex flex-col gap-1">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+                                        {{ $user->role === 'admin' ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' : '' }}
+                                        {{ $user->role === 'kasir' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' : '' }}
+                                        {{ $user->role === 'customer' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' : '' }}
+                                        {{ $user->role === 'pembeli' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' : '' }}">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        {{ $user->role === 'customer' ? 'Member' : ucfirst($user->role) }}
+                                    </span>
+                                    @if($user->role === 'customer')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold {{ $user->member_level_color }}">
+                                            {{ $user->member_level_icon }} {{ ucfirst($user->member_level) }}
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {{ $user->created_at->format('d M Y') }}

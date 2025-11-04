@@ -68,6 +68,39 @@
                         @enderror
                     </div>
 
+                    <!-- Barcode -->
+                    <div>
+                        <label for="barcode" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Barcode/Kode Produk
+                            <span class="text-gray-500 text-xs font-normal ml-1">(Opsional - untuk scan barcode)</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                </svg>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="barcode" 
+                                id="barcode" 
+                                value="{{ old('barcode', $product->barcode) }}" 
+                                class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200 @error('barcode') border-red-500 @enderror"
+                                placeholder="Contoh: 8993176110074 (EAN-13, UPC, CODE-128)"
+                                maxlength="50"
+                            >
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                            <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Masukkan kode barcode produk (13 digit untuk EAN-13, atau format lain). Kosongkan jika tidak ada.
+                        </p>
+                        @error('barcode')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- Harga -->
                     <div>
                         <label for="harga" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -193,10 +226,10 @@
                         </label>
                         
                         <!-- Current Image Preview -->
-                        @if ($product->gambar)
+                        @if ($product->image_url)
                             <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                 <p class="text-sm font-medium text-gray-700 mb-2">Gambar saat ini:</p>
-                                <img id="currentImage" src="{{ Storage::url($product->gambar) }}" alt="{{ $product->nama_barang }}" class="max-w-xs rounded-lg shadow-md">
+                                <img id="currentImage" src="{{ $product->image_url }}" alt="{{ $product->nama_barang }}" class="max-w-xs rounded-lg shadow-md">
                             </div>
                         @endif
 

@@ -35,7 +35,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
@@ -63,6 +64,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 
     // Discount & Promotion Management
     Route::resource('discounts', DiscountController::class);
+    
+    // Wallet Management (Admin)
+    Route::get('/wallets', [App\Http\Controllers\Admin\WalletController::class, 'index'])->name('admin.wallets.index');
+    Route::get('/wallets/topup', [App\Http\Controllers\Admin\WalletController::class, 'create'])->name('admin.wallets.create');
+    Route::post('/wallets/topup', [App\Http\Controllers\Admin\WalletController::class, 'store'])->name('admin.wallets.store');
+    Route::get('/wallets/{wallet}', [App\Http\Controllers\Admin\WalletController::class, 'show'])->name('admin.wallets.show');
+    Route::post('/wallets/{wallet}/toggle', [App\Http\Controllers\Admin\WalletController::class, 'toggleStatus'])->name('admin.wallets.toggle');
 
     Route::post('discounts/{discount}/rules', [DiscountRuleController::class, 'store'])->name('discounts.rules.store');
     Route::put('discount-rules/{discountRule}', [DiscountRuleController::class, 'update'])->name('discount-rules.update');
@@ -80,6 +88,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
     Route::get('/kasir/transaksi', [KasirTransactionController::class, 'index'])->name('kasir.transactions.index');
     Route::get('/kasir/transaksi/cari-produk', [KasirTransactionController::class, 'searchProducts'])->name('kasir.transactions.search');
+    Route::get('/kasir/transaksi/member-points', [KasirTransactionController::class, 'getMemberPoints'])->name('kasir.transactions.member-points');
     Route::post('/kasir/transaksi', [KasirTransactionController::class, 'store'])->name('kasir.transactions.store');
     Route::get('/kasir/transaksi/{transaction:invoice_number}', [KasirTransactionController::class, 'show'])->name('kasir.transactions.show');
 
@@ -114,10 +123,10 @@ Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
 });
 
 
-// Grup untuk Pembeli
-// Middleware 'role:admin,pembeli' berarti Admin DAN Pembeli bisa akses.
+// Grup untuk Pembeli & Member (Customer)
+// Middleware 'role:admin,pembeli,customer' berarti Admin, Pembeli, DAN Customer bisa akses.
 // (Admin harus bisa melihat apa yang pembeli lihat)
-Route::middleware(['auth', 'role:admin,pembeli'])->group(function () {
+Route::middleware(['auth', 'role:admin,pembeli,customer'])->group(function () {
     Route::get('/belanja', [ProductCatalogController::class, 'index'])->name('customer.shop');
     Route::get('/keranjang', [CartController::class, 'index'])->name('cart.index');
     Route::post('/keranjang', [CartController::class, 'store'])->name('cart.store');
@@ -128,6 +137,10 @@ Route::middleware(['auth', 'role:admin,pembeli'])->group(function () {
     Route::post('/beli-langsung', [CartController::class, 'buyNow'])->name('cart.buyNow');
 
     Route::get('/riwayat-transaksi', [CustomerTransactionController::class, 'index'])->name('customer.transactions.index');
+    
+    // Wallet routes for customers
+    Route::get('/saldo', [App\Http\Controllers\WalletController::class, 'index'])->name('wallet.index');
+    Route::get('/saldo/transaksi/{id}', [App\Http\Controllers\WalletController::class, 'show'])->name('wallet.show');
 
 });
 

@@ -13,44 +13,130 @@
 
         <div class="mt-6 grid gap-10 lg:grid-cols-2 lg:items-start">
             <div class="bg-white border border-gray-100 rounded-2xl shadow-lg overflow-hidden lg:h-full">
-                <div class="relative bg-gradient-to-br from-gray-100 to-gray-200 aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[520px]">
-                    @if ($product->gambar)
-                        <img src="{{ \Illuminate\Support\Facades\Storage::url($product->gambar) }}" alt="{{ $product->nama_barang }}" class="object-cover w-full h-full" loading="lazy">
-                    @else
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                        </div>
-                    @endif
+                @php
+                    // Gather all images using helper method
+                    $allImages = $product->all_image_urls;
                     
-                    @php
-                        $showPricing = $product->discountSummary();
-                    @endphp
-                    
-                    <!-- Discount Badge on Image -->
-                    @if ($showPricing['applies'])
-                        <div class="absolute top-4 left-4">
-                            <div class="bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-3 rounded-xl shadow-2xl transform hover:scale-105 transition">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <span class="font-bold text-2xl">{{ number_format($showPricing['discount_percentage'], 0) }}%</span>
+                    $discountInfo = $product->getDiscountDisplayInfo();
+                @endphp
+                
+                @if (count($allImages) > 1)
+                    <!-- Image Carousel for Multiple Images -->
+                    <div x-data="imageCarousel({{ json_encode($allImages) }})" class="relative">
+                        <!-- Main Image Display -->
+                        <div class="relative bg-gradient-to-br from-gray-100 to-gray-200 aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[520px] overflow-hidden">
+                            <template x-for="(image, index) in images" :key="index">
+                                <img 
+                                    :src="image" 
+                                    :alt="`{{ $product->nama_barang }} - Gambar ${index + 1}`"
+                                    x-show="currentIndex === index"
+                                    x-transition:enter="transition ease-out duration-300"
+                                    x-transition:enter-start="opacity-0 transform scale-95"
+                                    x-transition:enter-end="opacity-100 transform scale-100"
+                                    class="absolute inset-0 object-cover w-full h-full"
+                                    loading="lazy"
+                                >
+                            </template>
+                            
+                            <!-- Discount Badge -->
+                            @if ($discountInfo && $discountInfo['has_discount'])
+                                <div class="absolute top-4 left-4 z-10">
+                                    <div class="bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-3 rounded-xl shadow-2xl transform hover:scale-105 transition">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clip-rule="evenodd"/>
+                                            </svg>
+                                            <span class="font-bold text-2xl">{{ number_format($discountInfo['percentage'], 0) }}%</span>
+                                        </div>
+                                        <span class="text-xs font-bold block text-center uppercase tracking-widest">Diskon Spesial</span>
+                                    </div>
                                 </div>
-                                <span class="text-xs font-bold block text-center uppercase tracking-widest">Diskon Spesial</span>
+                            @endif
+                            
+                            <!-- Navigation Arrows -->
+                            <button 
+                                @click="prev()" 
+                                class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition z-10"
+                                :class="{ 'opacity-50 cursor-not-allowed': currentIndex === 0 }"
+                                :disabled="currentIndex === 0"
+                            >
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                            </button>
+                            <button 
+                                @click="next()" 
+                                class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition z-10"
+                                :class="{ 'opacity-50 cursor-not-allowed': currentIndex === images.length - 1 }"
+                                :disabled="currentIndex === images.length - 1"
+                            >
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
+                            
+                            <!-- Image Counter -->
+                            <div class="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-semibold z-10">
+                                <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
                             </div>
                         </div>
-                    @endif
-                </div>
+                        
+                        <!-- Thumbnail Strip -->
+                        <div class="bg-gray-50 p-3 overflow-x-auto">
+                            <div class="flex gap-2 min-w-max">
+                                <template x-for="(image, index) in images" :key="index">
+                                    <button 
+                                        @click="goToImage(index)"
+                                        class="relative w-20 h-20 rounded-lg overflow-hidden border-2 transition flex-shrink-0"
+                                        :class="currentIndex === index ? 'border-[#F87B1B] ring-2 ring-[#F87B1B] ring-offset-2' : 'border-gray-300 hover:border-gray-400'"
+                                    >
+                                        <img :src="image" :alt="`Thumbnail ${index + 1}`" class="w-full h-full object-cover">
+                                        <div 
+                                            x-show="currentIndex === index"
+                                            class="absolute inset-0 bg-[#F87B1B]/20"
+                                        ></div>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <!-- Single Image Display -->
+                    <div class="relative bg-gradient-to-br from-gray-100 to-gray-200 aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[520px]">
+                        @if (count($allImages) > 0)
+                            <img src="{{ $allImages[0] }}" alt="{{ $product->nama_barang }}" class="object-cover w-full h-full" loading="lazy">
+                        @else
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                            </div>
+                        @endif
+                        
+                        <!-- Discount Badge on Single Image -->
+                        @if ($discountInfo && $discountInfo['has_discount'])
+                            <div class="absolute top-4 left-4">
+                                <div class="bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-3 rounded-xl shadow-2xl transform hover:scale-105 transition">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span class="font-bold text-2xl">{{ number_format($discountInfo['percentage'], 0) }}%</span>
+                                    </div>
+                                    <span class="text-xs font-bold block text-center uppercase tracking-widest">Diskon Spesial</span>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
             </div>
 
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">{{ $product->nama_barang }}</h1>
                 @php
-                    $pricing = $product->discountSummary();
+                    $pricing = $product->getDiscountDisplayInfo();
                 @endphp
-                @if ($pricing['applies'])
+                @if ($pricing && $pricing['has_discount'])
                     <div class="mt-4 bg-gradient-to-r from-orange-50 to-red-50 p-4 rounded-xl border-2 border-orange-200">
                         <div class="flex items-center gap-2 mb-2">
                             <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -59,16 +145,16 @@
                             <span class="text-sm font-bold text-red-600 uppercase tracking-wide">Harga Spesial dengan Diskon!</span>
                         </div>
                         <div class="flex items-baseline gap-3 flex-wrap">
-                            <span class="text-4xl font-extrabold text-[#F87B1B]">Rp {{ number_format($pricing['unit_price'], 0, ',', '.') }}</span>
+                            <span class="text-4xl font-extrabold text-[#F87B1B]">Rp {{ number_format($pricing['discounted_price'], 0, ',', '.') }}</span>
                             <div class="flex flex-col">
-                                <span class="text-sm text-gray-500 line-through">Rp {{ number_format($pricing['base_unit_price'], 0, ',', '.') }}</span>
+                                <span class="text-sm text-gray-500 line-through">Rp {{ number_format($pricing['base_price'], 0, ',', '.') }}</span>
                                 <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-500 text-white text-xs font-bold shadow-md">
-                                    HEMAT {{ number_format($pricing['discount_percentage'], 0) }}%
+                                    HEMAT {{ number_format($pricing['percentage'], 0) }}%
                                 </span>
                             </div>
                         </div>
                         <div class="mt-2 text-xs text-gray-600">
-                            💰 Anda menghemat <span class="font-bold text-green-600">Rp {{ number_format($pricing['unit_discount'], 0, ',', '.') }}</span> per item!
+                            💰 Anda menghemat <span class="font-bold text-green-600">Rp {{ number_format($pricing['savings'], 0, ',', '.') }}</span> per item!
                         </div>
                     </div>
                 @else
@@ -92,7 +178,7 @@
 
                 <div class="mt-8">
                     @auth
-                        @if (in_array(auth()->user()->role, ['admin', 'pembeli']))
+                        @if (in_array(auth()->user()->role, ['admin', 'pembeli', 'customer']))
                             <div class="space-y-4">
                                 <!-- Form untuk input jumlah yang shared -->
                                 <div x-data="{ quantity: 1 }">
@@ -174,3 +260,30 @@
         </div>
     </section>
 @endsection
+
+@push('scripts')
+<script>
+    function imageCarousel(images) {
+        return {
+            images: images,
+            currentIndex: 0,
+            
+            next() {
+                if (this.currentIndex < this.images.length - 1) {
+                    this.currentIndex++;
+                }
+            },
+            
+            prev() {
+                if (this.currentIndex > 0) {
+                    this.currentIndex--;
+                }
+            },
+            
+            goToImage(index) {
+                this.currentIndex = index;
+            }
+        }
+    }
+</script>
+@endpush

@@ -29,6 +29,7 @@ class StoreSaleRequest extends FormRequest
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            'points_to_redeem' => ['nullable', 'integer', 'min:0'],
             'amount_paid' => ['required', 'numeric', 'min:0'],
         ];
     }
@@ -41,6 +42,12 @@ class StoreSaleRequest extends FormRequest
         if ($this->missing('discount') || $this->input('discount') === null) {
             $this->merge([
                 'discount' => 0,
+            ]);
+        }
+        
+        if ($this->missing('points_to_redeem') || $this->input('points_to_redeem') === null) {
+            $this->merge([
+                'points_to_redeem' => 0,
             ]);
         }
     }

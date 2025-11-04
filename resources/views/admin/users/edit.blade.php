@@ -101,16 +101,61 @@
                             <option value="">Pilih Role</option>
                             <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="kasir" {{ old('role', $user->role) == 'kasir' ? 'selected' : '' }}>Kasir</option>
-                            <option value="pembeli" {{ old('role', $user->role) == 'pembeli' ? 'selected' : '' }}>Pembeli / Pelanggan</option>
+                            <option value="customer" {{ old('role', $user->role) == 'customer' ? 'selected' : '' }}>Member / Pelanggan Terdaftar</option>
+                            <option value="pembeli" {{ old('role', $user->role) == 'pembeli' ? 'selected' : '' }}>Pembeli Biasa</option>
                         </select>
                         @error('role')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
-                        <p class="mt-2 text-sm text-gray-500">
-                            <span class="font-semibold">Admin:</span> Akses penuh ke semua fitur<br>
-                            <span class="font-semibold">Kasir:</span> Akses kelola produk dan transaksi<br>
-                            <span class="font-semibold">Pembeli:</span> Akses belanja dan keranjang
-                        </p>
+                        <div class="mt-2 space-y-1 text-sm text-gray-600">
+                            <p><span class="font-semibold">🔐 Admin:</span> Akses penuh ke semua fitur sistem</p>
+                            <p><span class="font-semibold">💰 Kasir:</span> Akses kelola produk dan transaksi penjualan</p>
+                            <p><span class="font-semibold">⭐ Member:</span> Dapat loyalty poin setiap belanja & tukar poin untuk diskon</p>
+                            <p><span class="font-semibold">👤 Pembeli Biasa:</span> Akses belanja tanpa benefit poin loyalty</p>
+                        </div>
+                    </div>
+
+                    <!-- Member Info (Jika user adalah member) -->
+                    @if($user->role === 'customer')
+                        <div class="bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-xl p-5">
+                            <div class="flex items-start gap-4">
+                                <div class="flex-shrink-0 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-2xl">
+                                    {{ $user->member_level_icon }}
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-bold text-gray-800 mb-2">Informasi Member</h3>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p class="text-xs text-gray-600 uppercase tracking-wider mb-1">Member Level</p>
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold {{ $user->member_level_color }}">
+                                                {{ $user->member_level_icon }} {{ ucfirst($user->member_level) }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-600 uppercase tracking-wider mb-1">Poin Saat Ini</p>
+                                            <p class="text-2xl font-bold text-orange-600">{{ number_format($user->points, 0, ',', '.') }}</p>
+                                            <p class="text-xs text-gray-500">= Rp {{ number_format($user->points * 100, 0, ',', '.') }} diskon</p>
+                                        </div>
+                                    </div>
+                                    @if($user->member_since)
+                                        <p class="mt-3 text-xs text-gray-600">Member sejak: {{ $user->member_since->format('d M Y') }}</p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Warning saat mengubah dari Member ke Pembeli Biasa -->
+                    <div id="role-change-warning" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                        <div class="flex items-start">
+                            <svg class="w-6 h-6 text-red-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            <div class="flex-1">
+                                <h3 class="text-red-800 font-semibold mb-1">⚠️ Peringatan!</h3>
+                                <p class="text-sm text-red-700">Mengubah dari <strong>Member</strong> ke <strong>Pembeli Biasa</strong> akan membuat user kehilangan semua benefit loyalty poin. Poin yang ada akan tetap tersimpan tapi tidak bisa digunakan.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -186,4 +231,21 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('role');
+    const warningBox = document.getElementById('role-change-warning');
+    const originalRole = '{{ $user->role }}';
+
+    roleSelect.addEventListener('change', function() {
+        // Tampilkan warning jika mengubah dari customer (member) ke pembeli biasa
+        if (originalRole === 'customer' && this.value === 'pembeli') {
+            warningBox.classList.remove('hidden');
+        } else {
+            warningBox.classList.add('hidden');
+        }
+    });
+});
+</script>
 @endsection

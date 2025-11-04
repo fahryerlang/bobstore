@@ -58,13 +58,23 @@
                 <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
                     <!-- Product Image -->
                     <div class="relative overflow-hidden bg-gray-100 aspect-square group">
-                        @if ($product->gambar)
-                            <img src="{{ Storage::url($product->gambar) }}" alt="{{ $product->nama_barang }}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+                        @if ($product->image_url)
+                            <img src="{{ $product->image_url }}" alt="{{ $product->nama_barang }}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
                         @else
                             <div class="absolute inset-0 flex items-center justify-center">
                                 <svg class="h-20 w-20 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
+                            </div>
+                        @endif
+                        
+                        <!-- Multiple Images Indicator -->
+                        @if (!empty($product->images) && count($product->images) > 0)
+                            <div class="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                                </svg>
+                                +{{ count($product->images) }}
                             </div>
                         @endif
                         
@@ -101,6 +111,16 @@
                     <!-- Product Info -->
                     <div class="p-5">
                         <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{ $product->nama_barang }}</h3>
+                        
+                        <!-- Barcode Info -->
+                        @if($product->barcode)
+                            <div class="flex items-center gap-1.5 mb-2 text-xs text-gray-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                </svg>
+                                <span class="font-mono font-semibold">{{ $product->barcode }}</span>
+                            </div>
+                        @endif
                         
                         @php
                             $discountInfo = $product->getDiscountDisplayInfo();

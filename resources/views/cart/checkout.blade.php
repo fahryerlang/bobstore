@@ -149,6 +149,20 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                                     </svg>
                                 </label>
+
+                                <label class="relative flex items-center gap-4 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-[#F87B1B] transition" :class="paymentMethod === 'wallet' ? 'border-[#F87B1B] bg-orange-50' : ''">
+                                    <input type="radio" name="payment_method" value="wallet" x-model="paymentMethod" class="text-[#F87B1B] focus:ring-[#F87B1B]" required>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-gray-900">Saldo Wallet</p>
+                                        <p class="text-xs text-gray-500">
+                                            Saldo: Rp {{ number_format(auth()->user()->wallet?->balance ?? 0, 0, ',', '.') }}
+                                        </p>
+                                    </div>
+                                    <svg class="h-8 w-8 text-[#F87B1B]" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/>
+                                        <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                </label>
                             </div>
                         </div>
                     </div>

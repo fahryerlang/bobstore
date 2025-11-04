@@ -67,6 +67,39 @@
                         @enderror
                     </div>
 
+                    <!-- Barcode -->
+                    <div>
+                        <label for="barcode" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Barcode/Kode Produk
+                            <span class="text-gray-500 text-xs font-normal ml-1">(Opsional - untuk scan barcode)</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                </svg>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="barcode" 
+                                id="barcode" 
+                                value="{{ old('barcode') }}" 
+                                class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition duration-200 @error('barcode') border-red-500 @enderror"
+                                placeholder="Contoh: 8993176110074 (EAN-13, UPC, CODE-128)"
+                                maxlength="50"
+                            >
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                            <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Masukkan kode barcode produk (13 digit untuk EAN-13, atau format lain). Kosongkan jika tidak ada.
+                        </p>
+                        @error('barcode')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- Harga -->
                     <div>
                         <label for="harga" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -190,39 +223,114 @@
 
                     <!-- Gambar Produk -->
                     <div>
-                        <label for="gambar" class="block text-sm font-semibold text-gray-700 mb-2">
-                            Gambar Produk
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Gambar Produk <span class="text-gray-500 text-xs font-normal">(Pilih metode input)</span>
                         </label>
-                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-orange-500 transition duration-200">
-                            <div class="space-y-1 text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                <div class="flex text-sm text-gray-600">
-                                    <label for="gambar" class="relative cursor-pointer bg-white rounded-md font-medium text-[#F87B1B] hover:text-orange-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-orange-500">
-                                        <span>Upload gambar</span>
-                                        <input 
-                                            id="gambar" 
-                                            name="gambar" 
-                                            type="file" 
-                                            class="sr-only" 
-                                            accept="image/*"
-                                            onchange="previewImage(event)"
-                                        >
-                                    </label>
-                                    <p class="pl-1">atau drag and drop</p>
+                        
+                        <!-- Toggle Image Input Type -->
+                        <div class="flex gap-2 mb-4">
+                            <button type="button" onclick="switchImageInput('upload')" id="btnUpload" class="flex-1 px-4 py-2 bg-[#F87B1B] text-white rounded-lg font-semibold transition">
+                                Upload File
+                            </button>
+                            <button type="button" onclick="switchImageInput('url')" id="btnUrl" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">
+                                Link URL
+                            </button>
+                        </div>
+
+                        <input type="hidden" name="image_type" id="image_type" value="upload">
+
+                        <!-- Upload File Section -->
+                        <div id="uploadSection">
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-orange-500 transition duration-200">
+                                <div class="space-y-1 text-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <div class="flex text-sm text-gray-600">
+                                        <label for="gambar" class="relative cursor-pointer bg-white rounded-md font-medium text-[#F87B1B] hover:text-orange-600 focus-within:outline-none">
+                                            <span>Upload gambar</span>
+                                            <input 
+                                                id="gambar" 
+                                                name="gambar" 
+                                                type="file" 
+                                                class="sr-only" 
+                                                accept="image/*"
+                                                onchange="previewImage(event)"
+                                            >
+                                        </label>
+                                        <p class="pl-1">atau drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF hingga 2MB</p>
                                 </div>
-                                <p class="text-xs text-gray-500">PNG, JPG, GIF hingga 2MB</p>
+                            </div>
+
+                            <!-- Multiple Images Upload -->
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Gambar Tambahan (Opsional) <span class="text-xs text-gray-500">- Maks 5 gambar</span>
+                                </label>
+                                <input 
+                                    type="file" 
+                                    name="additional_images[]" 
+                                    id="additional_images"
+                                    multiple 
+                                    accept="image/*"
+                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-[#F87B1B] hover:file:bg-orange-100"
+                                    onchange="previewAdditionalImages(event)"
+                                >
+                                <p class="mt-1 text-xs text-gray-500">Pilih hingga 5 gambar tambahan</p>
                             </div>
                         </div>
+
+                        <!-- URL Input Section -->
+                        <div id="urlSection" class="hidden">
+                            <div class="space-y-3">
+                                <div>
+                                    <label for="image_url" class="block text-sm font-medium text-gray-700 mb-1">URL Gambar Utama</label>
+                                    <input 
+                                        type="url" 
+                                        name="image_url" 
+                                        id="image_url"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        placeholder="https://example.com/image.jpg"
+                                        onchange="previewUrlImage()"
+                                    >
+                                </div>
+
+                                <div id="additionalUrlsContainer">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">URL Gambar Tambahan (Opsional)</label>
+                                    <div id="urlInputs">
+                                        <input 
+                                            type="url" 
+                                            name="additional_image_urls[]" 
+                                            class="w-full px-4 py-2 mb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                                            placeholder="https://example.com/image2.jpg"
+                                        >
+                                    </div>
+                                    <button type="button" onclick="addUrlInput()" class="mt-2 text-sm text-[#F87B1B] hover:text-orange-600 font-semibold">
+                                        + Tambah URL Gambar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         @error('gambar')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        @error('image_url')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                         
                         <!-- Image Preview -->
                         <div id="imagePreview" class="mt-4 hidden">
-                            <p class="text-sm font-semibold text-gray-700 mb-2">Preview:</p>
-                            <img id="preview" src="" alt="Preview" class="max-w-xs rounded-lg shadow-md">
+                            <p class="text-sm font-semibold text-gray-700 mb-2">Preview Gambar Utama:</p>
+                            <img id="preview" src="" alt="Preview" class="max-w-xs rounded-lg shadow-md border border-gray-200">
+                        </div>
+
+                        <!-- Additional Images Preview -->
+                        <div id="additionalPreview" class="mt-4 hidden">
+                            <p class="text-sm font-semibold text-gray-700 mb-2">Preview Gambar Tambahan:</p>
+                            <div id="additionalPreviewContainer" class="grid grid-cols-2 md:grid-cols-5 gap-2"></div>
                         </div>
                     </div>
 
@@ -421,6 +529,34 @@
 </div>
 
 <script>
+    // Switch between upload and URL input modes
+    function switchImageInput(mode) {
+        const uploadSection = document.getElementById('uploadSection');
+        const urlSection = document.getElementById('urlSection');
+        const imageTypeInput = document.getElementById('image_type');
+        const btnUpload = document.getElementById('btnUpload');
+        const btnUrl = document.getElementById('btnUrl');
+        
+        if (mode === 'upload') {
+            uploadSection.classList.remove('hidden');
+            urlSection.classList.add('hidden');
+            imageTypeInput.value = 'upload';
+            btnUpload.classList.add('bg-[#F87B1B]', 'text-white');
+            btnUpload.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+            btnUrl.classList.remove('bg-[#F87B1B]', 'text-white');
+            btnUrl.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+        } else {
+            uploadSection.classList.add('hidden');
+            urlSection.classList.remove('hidden');
+            imageTypeInput.value = 'url';
+            btnUrl.classList.add('bg-[#F87B1B]', 'text-white');
+            btnUrl.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+            btnUpload.classList.remove('bg-[#F87B1B]', 'text-white');
+            btnUpload.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+        }
+    }
+
+    // Preview main uploaded image
     function previewImage(event) {
         const file = event.target.files[0];
         const preview = document.getElementById('preview');
@@ -434,6 +570,78 @@
             }
             reader.readAsDataURL(file);
         }
+    }
+
+    // Preview additional uploaded images
+    function previewAdditionalImages(event) {
+        const files = event.target.files;
+        const container = document.getElementById('additionalPreviewContainer');
+        const previewSection = document.getElementById('additionalPreview');
+        
+        container.innerHTML = ''; // Clear previous previews
+        
+        if (files.length > 0) {
+            previewSection.classList.remove('hidden');
+            
+            Array.from(files).forEach((file, index) => {
+                if (index < 5) { // Limit to 5 images
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imgWrapper = document.createElement('div');
+                        imgWrapper.className = 'relative group';
+                        imgWrapper.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview ${index + 1}" class="w-full h-24 object-cover rounded-lg shadow-md border border-gray-200">
+                            <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-lg">
+                                <span class="text-white text-xs font-semibold">Gambar ${index + 1}</span>
+                            </div>
+                        `;
+                        container.appendChild(imgWrapper);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        } else {
+            previewSection.classList.add('hidden');
+        }
+    }
+
+    // Preview main URL image
+    function previewUrlImage() {
+        const urlInput = document.getElementById('image_url');
+        const preview = document.getElementById('preview');
+        const previewContainer = document.getElementById('imagePreview');
+        
+        if (urlInput.value) {
+            preview.src = urlInput.value;
+            previewContainer.classList.remove('hidden');
+            
+            // Handle image load error
+            preview.onerror = function() {
+                alert('Gagal memuat gambar dari URL. Pastikan URL valid dan dapat diakses.');
+                previewContainer.classList.add('hidden');
+            };
+        } else {
+            previewContainer.classList.add('hidden');
+        }
+    }
+
+    // Add more URL input fields
+    let urlInputCount = 1;
+    function addUrlInput() {
+        if (urlInputCount >= 5) {
+            alert('Maksimal 5 gambar tambahan');
+            return;
+        }
+        
+        const container = document.getElementById('urlInputs');
+        const newInput = document.createElement('input');
+        newInput.type = 'url';
+        newInput.name = 'additional_image_urls[]';
+        newInput.className = 'w-full px-4 py-2 mb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500';
+        newInput.placeholder = `https://example.com/image${urlInputCount + 1}.jpg`;
+        
+        container.appendChild(newInput);
+        urlInputCount++;
     }
 
     function loadSubcategories(categoryId) {
