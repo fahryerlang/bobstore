@@ -51,7 +51,7 @@ class WalletController extends Controller
             $selectedUser = User::with('wallet')->find($request->input('user_id'));
         }
         
-        $users = User::where('role', 'pembeli')
+        $users = User::whereIn('role', ['pembeli', 'customer'])
             ->when($search, function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%");
