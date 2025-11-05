@@ -25,17 +25,36 @@
              );
          }
      }">
-    <div class="mb-8 flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Kelola Saldo Pembeli</h1>
-            <p class="mt-2 text-gray-600">Manage wallet dan top up saldo untuk pembeli</p>
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Kelola Saldo Pembeli</h1>
+                <p class="mt-2 text-gray-600">Manage wallet dan top up saldo untuk pembeli</p>
+            </div>
+            <div class="flex gap-3">
+                @php
+                    $pendingTopupCount = \App\Models\WalletTopupRequest::where('status', 'pending')->count();
+                @endphp
+                <a href="{{ route('admin.wallets.topup-requests') }}" class="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg relative">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                    </svg>
+                    Request Top Up
+                    @if($pendingTopupCount > 0)
+                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                            {{ $pendingTopupCount }}
+                        </span>
+                    @endif
+                </a>
+                <a href="{{ route('admin.wallets.create') }}" class="inline-flex items-center gap-2 bg-[#F87B1B] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition shadow-lg">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/>
+                    </svg>
+                    Top Up Manual
+                </a>
+            </div>
         </div>
-        <a href="{{ route('admin.wallets.create') }}" class="inline-flex items-center gap-2 bg-[#F87B1B] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition shadow-lg">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/>
-            </svg>
-            Top Up Saldo
-        </a>
     </div>
 
     <!-- Real-time Search -->

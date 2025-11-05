@@ -58,6 +58,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     // CRUD PRODUK (Route ini akan menghasilkan URL seperti /admin/products, /admin/products/create, dll.)
     // Nama route-nya akan menjadi 'products.index', 'products.store', dll.
     Route::resource('products', ProductController::class);
+    
+    // Barcode routes
+    Route::get('/products/{id}/barcode', [ProductController::class, 'showBarcode'])->name('products.barcode');
+    Route::post('/products/print-barcodes', [ProductController::class, 'printBarcodes'])->name('products.print-barcodes');
 
     // CRUD USERS (Kelola Pengguna)
     Route::resource('users', UserController::class);
@@ -71,6 +75,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::post('/wallets/topup', [App\Http\Controllers\Admin\WalletController::class, 'store'])->name('admin.wallets.store');
     Route::get('/wallets/{wallet}', [App\Http\Controllers\Admin\WalletController::class, 'show'])->name('admin.wallets.show');
     Route::post('/wallets/{wallet}/toggle', [App\Http\Controllers\Admin\WalletController::class, 'toggleStatus'])->name('admin.wallets.toggle');
+    
+    // Wallet Topup Requests (Admin)
+    Route::get('/wallets/requests/list', [App\Http\Controllers\Admin\WalletController::class, 'topupRequests'])->name('admin.wallets.topup-requests');
+    Route::get('/wallets/requests/{id}', [App\Http\Controllers\Admin\WalletController::class, 'showTopupRequest'])->name('admin.wallets.topup-request-detail');
+    Route::post('/wallets/requests/{id}/approve', [App\Http\Controllers\Admin\WalletController::class, 'approveTopupRequest'])->name('admin.wallets.topup-request-approve');
+    Route::post('/wallets/requests/{id}/reject', [App\Http\Controllers\Admin\WalletController::class, 'rejectTopupRequest'])->name('admin.wallets.topup-request-reject');
 
     Route::post('discounts/{discount}/rules', [DiscountRuleController::class, 'store'])->name('discounts.rules.store');
     Route::put('discount-rules/{discountRule}', [DiscountRuleController::class, 'update'])->name('discount-rules.update');
@@ -88,6 +98,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
     Route::get('/kasir/transaksi', [KasirTransactionController::class, 'index'])->name('kasir.transactions.index');
     Route::get('/kasir/transaksi/cari-produk', [KasirTransactionController::class, 'searchProducts'])->name('kasir.transactions.search');
+    Route::post('/kasir/transaksi/scan-barcode', [KasirTransactionController::class, 'scanBarcode'])->name('kasir.transactions.scan-barcode');
     Route::get('/kasir/transaksi/member-points', [KasirTransactionController::class, 'getMemberPoints'])->name('kasir.transactions.member-points');
     Route::post('/kasir/transaksi', [KasirTransactionController::class, 'store'])->name('kasir.transactions.store');
     Route::get('/kasir/transaksi/{transaction:invoice_number}', [KasirTransactionController::class, 'show'])->name('kasir.transactions.show');
@@ -141,6 +152,12 @@ Route::middleware(['auth', 'role:admin,pembeli,customer'])->group(function () {
     // Wallet routes for customers
     Route::get('/saldo', [App\Http\Controllers\WalletController::class, 'index'])->name('wallet.index');
     Route::get('/saldo/transaksi/{id}', [App\Http\Controllers\WalletController::class, 'show'])->name('wallet.show');
+    
+    // Wallet Topup Request routes for customers
+    Route::get('/saldo/request-topup', [App\Http\Controllers\WalletController::class, 'createTopupRequest'])->name('wallet.request-topup');
+    Route::post('/saldo/request-topup', [App\Http\Controllers\WalletController::class, 'storeTopupRequest'])->name('wallet.request-topup.store');
+    Route::get('/saldo/requests', [App\Http\Controllers\WalletController::class, 'topupRequests'])->name('wallet.topup-requests');
+    Route::get('/saldo/requests/{id}', [App\Http\Controllers\WalletController::class, 'showTopupRequest'])->name('wallet.topup-request-detail');
 
 });
 

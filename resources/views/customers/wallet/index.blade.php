@@ -68,6 +68,23 @@
         </div>
     </div>
 
+    <!-- Action Buttons -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <a href="{{ route('wallet.request-topup') }}" class="flex items-center justify-center gap-3 bg-[#F87B1B] hover:bg-orange-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/>
+            </svg>
+            Request Top Up Online
+        </a>
+        <a href="{{ route('wallet.topup-requests') }}" class="flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-4 px-6 rounded-xl shadow-lg border-2 border-gray-200 transition-all duration-200 hover:shadow-xl">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+            </svg>
+            Riwayat Request
+        </a>
+    </div>
+
     <!-- Info Banner -->
     <div class="bg-blue-50 border-l-4 border-blue-400 rounded-lg p-5 mb-8">
         <div class="flex items-start gap-3">
@@ -76,7 +93,7 @@
             </svg>
             <div>
                 <h3 class="font-semibold text-blue-900 mb-1">Cara Top Up Saldo</h3>
-                <p class="text-sm text-blue-800">Untuk mengisi saldo, silakan hubungi admin atau datang langsung ke toko. Admin akan melakukan top up saldo untuk Anda.</p>
+                <p class="text-sm text-blue-800">Untuk mengisi saldo, silakan hubungi admin atau datang langsung ke toko. Admin akan melakukan top up saldo untuk Anda. <strong>Atau Anda dapat melakukan request top up online</strong> dan menunggu persetujuan admin.</p>
             </div>
         </div>
     </div>

@@ -128,4 +128,89 @@ class WalletController extends Controller
             ->back()
             ->with('success', "Wallet berhasil {$status}");
     }
+
+    /**
+     * Show topup requests
+     */
+    public function topupRequests(Request $request): View
+    {
+        $status = $request->input('status');
+        
+        $topupRequests = $this->walletService->getAllTopupRequests($status);
+        
+        // Count pending requests
+        $pendingCount = \App\Models\WalletTopupRequest::pending()->count();
+        
+        return view('admin.wallets.topup-requests', compact('topupRequests', 'pendingCount'));
+    }
+
+    /**
+     * Show topup request detail
+     */
+    public function showTopupRequest($id): View
+    {
+        $topupRequest = \App\Models\WalletTopupRequest::with(['user', 'user.wallet', 'admin', 'walletTransaction'])->findOrFail($id);
+        
+        return view('admin.wallets.topup-request-detail', compact('topupRequest'));
+    }
+
+    /**
+     * Approve topup request
+     */
+    public function approveTopupRequest(Request $request, $id): RedirectResponse
+    {
+        $request->validate([
+            'admin_notes' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $topupRequest = \App\Models\WalletTopupRequest::findOrFail($id);
+            $admin = auth()->user();
+            
+            $this->walletService->approveTopupRequest(
+                $topupRequest,
+                $admin,
+                $request->admin_notes
+            );
+
+            return redirect()
+                ->route('admin.wallets.topup-requests')
+                ->with('success', 'Request top up berhasil disetujui dan saldo telah ditambahkan.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal menyetujui request: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Reject topup request
+     */
+    public function rejectTopupRequest(Request $request, $id): RedirectResponse
+    {
+        $request->validate([
+            'admin_notes' => 'required|string|max:500',
+        ], [
+            'admin_notes.required' => 'Alasan penolakan harus diisi',
+        ]);
+
+        try {
+            $topupRequest = \App\Models\WalletTopupRequest::findOrFail($id);
+            $admin = auth()->user();
+            
+            $this->walletService->rejectTopupRequest(
+                $topupRequest,
+                $admin,
+                $request->admin_notes
+            );
+
+            return redirect()
+                ->route('admin.wallets.topup-requests')
+                ->with('success', 'Request top up berhasil ditolak.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal menolak request: ' . $e->getMessage());
+        }
+    }
 }

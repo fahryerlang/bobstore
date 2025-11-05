@@ -77,6 +77,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get wallet topup requests for the user.
+     */
+    public function walletTopupRequests()
+    {
+        return $this->hasMany(WalletTopupRequest::class);
+    }
+
+    /**
      * Get or create wallet for user
      */
     public function getOrCreateWallet()

@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>@yield('title', 'Katalog Produk') · {{ config('app.name', 'Laravel') }}</title>
 
@@ -142,6 +143,14 @@
                                         <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/>
                                     </svg>
                                     Kelola Saldo
+                                    @php
+                                        $pendingTopupCount = \App\Models\WalletTopupRequest::where('status', 'pending')->count();
+                                    @endphp
+                                    @if($pendingTopupCount > 0)
+                                        <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                            {{ $pendingTopupCount }}
+                                        </span>
+                                    @endif
                                 </a>
                             @elseif (auth()->user()->role === 'kasir')
                                 <a href="{{ route('kasir.products.index') }}" @click="sidebarOpen = false" @class([

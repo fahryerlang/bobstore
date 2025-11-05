@@ -83,6 +83,45 @@ class TransactionController extends Controller
     }
 
     /**
+     * Scan barcode and return product data
+     */
+    public function scanBarcode(Request $request): JsonResponse
+    {
+        $request->validate([
+            'barcode' => ['required', 'string', 'max:255'],
+        ]);
+
+        $barcode = trim($request->input('barcode'));
+
+        // Search product by barcode
+        $product = Product::where('barcode', $barcode)
+            ->where('stok', '>', 0)
+            ->first(['id', 'nama_barang', 'harga', 'stok', 'gambar', 'barcode']);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk tidak ditemukan atau stok habis',
+                'barcode' => $barcode,
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produk ditemukan',
+            'product' => [
+                'id' => $product->id,
+                'nama_barang' => $product->nama_barang,
+                'harga' => (float) $product->harga,
+                'stok' => (int) $product->stok,
+                'gambar' => $product->gambar,
+                'image_url' => $product->image_url,
+                'barcode' => $product->barcode,
+            ],
+        ]);
+    }
+
+    /**
      * Store a completed cashier transaction.
      */
     public function store(StoreSaleRequest $request, LoyaltyPointService $loyaltyService): RedirectResponse

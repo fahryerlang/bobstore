@@ -319,4 +319,33 @@ class ProductController extends Controller
             }
         }
     }
+
+    /**
+     * Show barcode for single product
+     */
+    public function showBarcode($id)
+    {
+        $product = Product::findOrFail($id);
+        $barcodeService = app(\App\Services\BarcodeService::class);
+        
+        return view('admin.products.barcode', compact('product', 'barcodeService'));
+    }
+
+    /**
+     * Print barcode labels (bulk)
+     */
+    public function printBarcodes(Request $request)
+    {
+        $request->validate([
+            'product_ids' => 'required|array',
+            'product_ids.*' => 'exists:products,id',
+            'copies' => 'nullable|integer|min:1|max:100',
+        ]);
+
+        $products = Product::whereIn('id', $request->product_ids)->get();
+        $copies = $request->input('copies', 1);
+        $barcodeService = app(\App\Services\BarcodeService::class);
+        
+        return view('admin.products.print-barcodes', compact('products', 'copies', 'barcodeService'));
+    }
 }

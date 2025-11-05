@@ -13,9 +13,9 @@
             <div class="flex items-center gap-3 text-sm text-gray-500">
                 <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 text-[#F87B1B]">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2h2m3-3l2-2m0 0l2 2m-2-2v12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
                     </svg>
-                    <span>Scan barcode langsung di kolom pencarian</span>
+                    <span>✨ Scan barcode untuk auto-add produk!</span>
                 </div>
             </div>
         </div>
@@ -206,13 +206,14 @@
                         <div class="px-6 py-5 border-b border-orange-100 bg-orange-50/60 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <h2 class="text-lg font-semibold text-gray-900">Tambah Produk</h2>
-                                <p class="text-sm text-gray-600">Cari nama produk atau scan barcode/ID produk.</p>
+                                <p class="text-sm text-gray-600">Cari nama produk atau scan barcode produk.</p>
                             </div>
-                            <div class="flex items-center gap-2 text-xs text-gray-500">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-4.215A2 2 0 0016.695 11H7.305a2 2 0 00-1.9 1.785L4 17h5m3-4v4" />
+                            <div class="flex items-center gap-2 text-xs bg-green-50 text-green-700 px-3 py-1.5 rounded-full border border-green-200">
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5z"/>
+                                    <path fill="white" d="M4 8h2v6H4V8zm4-1h1v7H8V7zm3 2h1v5h-1V9zm3-1h2v6h-2V8z"/>
                                 </svg>
-                                <span>Tekan Enter setelah scan untuk menambahkan otomatis</span>
+                                <span class="font-semibold">Scanner aktif! Scan barcode untuk auto-add ⚡</span>
                             </div>
                         </div>
                         <div class="px-6 py-6 space-y-6">
@@ -440,9 +441,12 @@
     const summaryTotal = document.getElementById('summary-total');
     const summaryChange = document.getElementById('summary-change');
     const searchEndpoint = @json(route('kasir.transactions.search'));
+    const scanBarcodeEndpoint = @json(route('kasir.transactions.scan-barcode'));
 
     let debounceTimer = null;
     let rowCounter = 0;
+    let barcodeBuffer = '';
+    let barcodeTimeout = null;
 
     const formatCurrency = (value) => {
         return 'Rp ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(Math.max(value, 0));
@@ -695,6 +699,111 @@
             .catch(() => clearSuggestions());
     };
 
+    // ===BARCODE SCANNER FUNCTIONALITY===
+    const scanBarcode = async (barcode) => {
+        try {
+            const response = await fetch(scanBarcodeEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ barcode: barcode.trim() })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.product) {
+                addOrIncreaseProduct(data.product);
+                
+                // Show success notification
+                showNotification('✅ Produk ditambahkan: ' + data.product.nama_barang, 'success');
+                
+                // Clear search input
+                searchInput.value = '';
+                searchInput.focus();
+            } else {
+                showNotification('❌ ' + (data.message || 'Produk tidak ditemukan'), 'error');
+                searchInput.value = '';
+                searchInput.focus();
+            }
+        } catch (error) {
+            console.error('Barcode scan error:', error);
+            showNotification('❌ Error scanning barcode', 'error');
+        }
+    };
+
+    // Simple notification function
+    const showNotification = (message, type = 'info') => {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-semibold transform transition-all duration-300 ${
+            type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+        }`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateY(-20px)';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    };
+
+    // Detect barcode scanner input (hardware scanner types fast)
+    let lastKeyTime = Date.now();
+    document.addEventListener('keypress', (event) => {
+        // Ignore if user is typing in another input (except search input)
+        if (document.activeElement && 
+            document.activeElement !== searchInput && 
+            (document.activeElement.tagName === 'INPUT' || 
+             document.activeElement.tagName === 'TEXTAREA' ||
+             document.activeElement.tagName === 'SELECT')) {
+            return;
+        }
+
+        const currentTime = Date.now();
+        const timeDiff = currentTime - lastKeyTime;
+        
+        // If keys are pressed rapidly (< 50ms between keys), it's likely a scanner
+        if (timeDiff > 100) {
+            barcodeBuffer = '';
+        }
+        
+        if (event.key === 'Enter') {
+            if (barcodeBuffer.length > 0) {
+                event.preventDefault();
+                scanBarcode(barcodeBuffer);
+                barcodeBuffer = '';
+            }
+        } else if (event.key.length === 1) {
+            barcodeBuffer += event.key;
+        }
+        
+        lastKeyTime = currentTime;
+        
+        // Auto clear buffer after 200ms of inactivity
+        if (barcodeTimeout) {
+            clearTimeout(barcodeTimeout);
+        }
+        barcodeTimeout = setTimeout(() => {
+            if (barcodeBuffer.length > 0) {
+                // If buffer has content, focus search input
+                searchInput.value = barcodeBuffer;
+                searchInput.focus();
+            }
+            barcodeBuffer = '';
+        }, 200);
+    });
+
+    // Manual barcode scan button
+    document.getElementById('scan-barcode-btn')?.addEventListener('click', () => {
+        const barcode = prompt('Masukkan barcode produk:');
+        if (barcode && barcode.trim()) {
+            scanBarcode(barcode.trim());
+        }
+    });
+
     searchInput.addEventListener('input', (event) => {
         const keyword = event.target.value.trim();
 
@@ -713,6 +822,15 @@
     searchInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
+            
+            // First try as barcode if looks like one (numeric/alphanumeric without spaces)
+            const value = searchInput.value.trim();
+            if (value && /^[A-Za-z0-9\-_]+$/.test(value)) {
+                scanBarcode(value);
+                return;
+            }
+            
+            // Otherwise use first suggestion
             const firstSuggestion = suggestionBox.querySelector('button[data-product]');
             if (firstSuggestion) {
                 const product = JSON.parse(decodeURIComponent(firstSuggestion.dataset.product));

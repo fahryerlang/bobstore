@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Models\WalletTopupRequest;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
@@ -192,5 +193,132 @@ class WalletService
     public function deactivateWallet(Wallet $wallet): bool
     {
         return $wallet->update(['is_active' => false]);
+    }
+
+    /**
+     * Create topup request
+     */
+    public function createTopupRequest(User $user, float $amount, ?string $userNotes = null): WalletTopupRequest
+    {
+        if ($amount <= 0) {
+            throw new Exception('Jumlah top up harus lebih dari 0');
+        }
+
+        if ($amount < 1000) {
+            throw new Exception('Jumlah minimal top up adalah Rp 1.000');
+        }
+
+        if ($amount > 100000000) {
+            throw new Exception('Jumlah maksimal top up adalah Rp 100.000.000');
+        }
+
+        // Check if user has pending request
+        $pendingRequest = WalletTopupRequest::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($pendingRequest) {
+            throw new Exception('Anda masih memiliki request top up yang belum diproses. Silakan tunggu admin memproses request sebelumnya.');
+        }
+
+        return WalletTopupRequest::create([
+            'user_id' => $user->id,
+            'amount' => $amount,
+            'status' => 'pending',
+            'user_notes' => $userNotes,
+        ]);
+    }
+
+    /**
+     * Approve topup request
+     */
+    public function approveTopupRequest(WalletTopupRequest $request, User $admin, ?string $adminNotes = null): WalletTransaction
+    {
+        if (!$request->canBeProcessed()) {
+            throw new Exception('Request sudah diproses sebelumnya');
+        }
+
+        return DB::transaction(function () use ($request, $admin, $adminNotes) {
+            // Process topup
+            $transaction = $this->topup(
+                $request->user,
+                $request->amount,
+                $admin,
+                'Top up saldo - Request #' . $request->id . ($request->user_notes ? ' - ' . $request->user_notes : ''),
+                ['topup_method' => 'online_request', 'request_id' => $request->id]
+            );
+
+            // Update request status
+            $request->update([
+                'status' => 'approved',
+                'admin_id' => $admin->id,
+                'admin_notes' => $adminNotes,
+                'wallet_transaction_id' => $transaction->id,
+                'approved_at' => now(),
+            ]);
+
+            return $transaction;
+        });
+    }
+
+    /**
+     * Reject topup request
+     */
+    public function rejectTopupRequest(WalletTopupRequest $request, User $admin, ?string $adminNotes = null): WalletTopupRequest
+    {
+        if (!$request->canBeProcessed()) {
+            throw new Exception('Request sudah diproses sebelumnya');
+        }
+
+        $request->update([
+            'status' => 'rejected',
+            'admin_id' => $admin->id,
+            'admin_notes' => $adminNotes,
+            'rejected_at' => now(),
+        ]);
+
+        return $request;
+    }
+
+    /**
+     * Get pending topup requests
+     */
+    public function getPendingTopupRequests()
+    {
+        return WalletTopupRequest::with(['user', 'user.wallet'])
+            ->pending()
+            ->latest()
+            ->get();
+    }
+
+    /**
+     * Get all topup requests
+     */
+    public function getAllTopupRequests(?string $status = null, int $perPage = 20)
+    {
+        $query = WalletTopupRequest::with(['user', 'admin'])
+            ->latest();
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        return $query->paginate($perPage);
+    }
+
+    /**
+     * Get user's topup requests
+     */
+    public function getUserTopupRequests(User $user, ?string $status = null, int $perPage = 15)
+    {
+        $query = $user->walletTopupRequests()
+            ->with('admin')
+            ->latest();
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        return $query->paginate($perPage);
     }
 }
